@@ -8,6 +8,8 @@ locally to show hunts, monsters, equipment, rewards and damage graphs.
 | --- | --- |
 | ![One hit, one number, matching HP and recorded damage](docs/screenshots/damage-numbers-compatibility.png) | ![HuntLog desktop graph and filters](docs/screenshots/desktop-dashboard.png) |
 
+[Download the mod](https://github.com/Rikiar73574/mhgu-huntlog/releases/latest/download/huntlog-mod.zip) | [Windows and Linux releases](https://github.com/Rikiar73574/mhgu-huntlog/releases)
+
 ## Install the mod
 
 MHGU 1.4.0 English data and stock MHGURecomp with built-in Forge are required.
@@ -88,3 +90,5 @@ sha256sum -c SHA256SUMS
 See [validation and limits](docs/validation.md) and
 [third-party notices](THIRD_PARTY_NOTICES.md). Authored changes are MIT;
 upstream code, game content, fonts and desktop libraries retain their notices.
+
+Linux desktop archives use the system C++ runtime and fontconfig, so newer graphics drivers and system fonts remain compatible. Build on the oldest supported distribution; the release targets glibc 2.35 or newer.

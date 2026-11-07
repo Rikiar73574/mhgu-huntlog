@@ -76,3 +76,11 @@ Stock Windows MHGURecomp 0.14.2 under Wine 11.20 loaded all 12 installed modfold
 The monster was placed once ahead of the copied-save hunter after a valid room loaded, using the same placement formula as MHGU_SUMMON. No damage clamp, invulnerability or pinning helper was active. The builtin helper can trigger while room 255 is still loading, so it was not used for the final damage proof. Original saves/settings/executable/mod order remained unchanged and all owned test clients were closed.
 
 World Sharpness Gauge's stage-21 startup warning reproduced with the original stack. Its custom gauge is not claimed verified by this compatibility test. Unknown future mod versions and every possible gameplay interaction remain outside the tested scope.
+
+## Desktop release platform checks
+
+Windows: actual x64 PE built with CPython 3.12.10, Qt 6.11.2 and PyInstaller 6.22.3. All 34 Python/Qt cases passed under Wine 11.20. The packaged executable rendered its dashboard and cumulative graph in a second clean Wine profile without Python installed. Physical Windows hardware was not available. Software rendering and sandbox overrides were confined to the Wine test environment.
+
+Linux: build target is Ubuntu 22.04, Python 3.10.12 and glibc 2.35. The initial bundle passed container checks but exposed a real forward-compatibility problem on the newer host: its bundled C++ runtime lacked a graphics-driver symbol, and its bundled fontconfig rejected the host font configuration. A controlled comparison reproduced the failure only in the bundle; excluding those two system libraries restored normal windowed rendering without test Qt flags. Other libraries remained unchanged. The build helper now applies this policy before checksumming.
+
+The app and parser code are shared between both platforms. Both bundles include their Python/Qt runtime, licenses and per-file checksums. They require no separately installed Python. Keep each extracted application folder together.

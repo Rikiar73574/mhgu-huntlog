@@ -81,4 +81,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           (cd release && sha256sum * > SHA256SUMS)
-          gh release create "$GITHUB_REF_NAME" --verify-tag --draft --title "HuntLog $GITHUB_REF_NAME" --notes-file docs/release.md release/*
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo 'Release already exists; validated archives remain available as workflow artifacts.'
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag --draft --title "HuntLog $GITHUB_REF_NAME" --notes-file docs/release.md release/*
+          fi

@@ -22,9 +22,18 @@ def build():
         '--specpath', str(ROOT / 'build'), str(ROOT / 'tools/desktop.py')]
     subprocess.run(command, cwd=ROOT, check=True)
     folder = ROOT / 'build/desktop/HuntLog'
+    if sys.platform != 'win32':
+        # Host graphics drivers and font configuration need their host libraries.
+        for name in ('libstdc++.so.6', 'libfontconfig.so.1'):
+            (folder / '_internal' / name).unlink(missing_ok=True)
     for name in ['README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md']:
         shutil.copy2(ROOT / name, folder / name)
     shutil.copytree(ROOT / 'licenses', folder / 'licenses', dirs_exist_ok=True)
+    version = f'{sys.version_info.major}.{sys.version_info.minor}'
+    for path in [Path(sys.base_prefix) / 'LICENSE.txt', Path(sys.base_prefix) / 'LICENSE',
+                 Path(f'/usr/share/doc/python{version}/copyright'), Path('/usr/share/licenses/python/LICENSE')]:
+        if path.is_file():
+            shutil.copy2(path, folder / 'licenses' / f'Python-{version}-{path.name}.txt')
     # Retain license texts shipped by dependencies, alongside their native files.
     for package in ['pyinstaller', 'PySide6', 'PySide6_Essentials', 'PySide6_Addons', 'shiboken6']:
         distribution = importlib.metadata.distribution(package)
