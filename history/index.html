@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HuntLog (MHGU)</title><link rel="stylesheet" href="/style.css"></head>
+<body><header><div class="crest" aria-hidden="true">⚔</div><div><h1>HuntLog</h1><p>Monster Hunter Generations Ultimate</p></div><button id="refresh">Refresh history</button></header>
+<nav class="page-nav" aria-label="Main navigation"><button id="nav-home">Overview</button><button id="nav-hunts">Hunt history</button></nav>
+<section id="homepage" aria-label="Hunting overview"></section>
+<div id="notice" role="status">Reading your saved hunts…</div>
+<main id="history-page" hidden><aside><div class="aside-title"><h2>Hunt history</h2><span id="count"></span></div>
+<label>Search<input id="search" type="search" placeholder="Monster, quest or hunter"></label>
+<div class="filter-grid"><label>Recording<select id="status"><option value="">All runs</option><option value="complete" selected>Closed runs</option><option value="incomplete">Incomplete runs</option></select></label><label>Crown<select id="crown"><option value="">Any crown</option><option value="large_gold">Large gold</option><option value="large_silver">Large silver</option><option value="small_gold">Small gold</option><option value="none">No crown</option><option value="unknown">Unknown</option></select></label></div>
+<label>Rank<select id="rank"><option value="">All ranks</option><option>LR</option><option>HR</option><option>GR</option><option>Unknown rank</option></select></label>
+<label>Weapon<select id="weapon"><option value="">All weapons</option></select></label><button id="clear" class="quiet">Clear filters</button><nav id="runs" aria-label="Recorded hunts"></nav></aside>
+<section id="detail" aria-live="polite"></section></main>
+<footer>Saved hunt data<br>Unavailable fields stay unknown. “Closed” means the recorder observed a return to town, not a verified quest outcome.</footer><script type="module" src="/app.js"></script></body></html>

@@ -1,0 +1,15 @@
+/build/
+/dist/
+/combined/target/
+/combined/dist/
+/combined/*.nro
+__pycache__/
+*.pyc
+*.jsonl
+*.log
+*.bin
+*.db
+*.sqlite
+.venv/
+*.spec
+/docs/plan.md

@@ -1,0 +1,18 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const path=require('node:path'),root=path.resolve(__dirname,'..');
+const src=fs.readFileSync(path.join(root,'history/app.js'),'utf8');
+const functions=src.slice(src.indexOf('function zoneLabel'),src.indexOf('function monsterDetails'))+src.slice(src.indexOf('function flinchTarget'),src.indexOf('function graphEvents'));
+const context={partNames:JSON.parse(fs.readFileSync(path.join(root,'history/part-names.json'),'utf8')).monsters,esc:String,fmt:String};
+vm.createContext(context);vm.runInContext(functions,context);
+const head={slot:0,name:'Head',flinches:1,break_groups:2,broken_groups:0,requirements_lr:[0,2],requirements_hr:[0,3]};
+const torso={slot:1,name:'Torso',flinches:2,break_groups:0};
+const monster={id:1,species:85,parts:[head,torso]};
+const run={quest:{rank:'LR'},hits:[],part_breaks:[]};
+let html=context.partDetails(run,monster);
+assert.match(html,/1\/2 flinches/);assert.match(html,/2 flinches/);assert.match(html,/Breakable\nIntact/);
+assert.doesNotMatch(html,/Last recorded HP|Stagger and sever pools|<h4>Breakable parts/);
+head.flinches=3;html=context.partDetails(run,monster);assert.match(html,/3\/2 flinches/);assert.match(html,/max="2" value="2"/);assert.match(html,/Breakable\nIntact/);
+head.broken_groups=2;html=context.partDetails(run,monster);assert.match(html,/Breakable\nBroken/);
+run.quest.rank='HR';html=context.partDetails(run,monster);assert.match(html,/3\/3 flinches/);
+assert.equal(context.partDetails({hits:[],part_breaks:[]},{id:2}),'');
+console.log('Unified parts: rank-specific thresholds, over-threshold counts, actual break flags passed');
