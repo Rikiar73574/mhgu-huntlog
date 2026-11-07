@@ -32,10 +32,39 @@ source/toolchain directory spaces are preserved during path remapping.
 - Package checks validate NRO headers, source allowlists, required notices,
   deterministic output, workstation-path rejection and plugin memory limits.
 
-The portable host runner passed all ten suites (156 executed cases, including
+The portable host runner passed all eleven suites (159 executed cases, including
 shared decoder tests exercised in multiple adapters). The Python non-desktop
 tests and JavaScript part-presentation regression passed. Desktop tests are
 recorded separately with the app builds.
+
+## Save transaction regression
+
+Version 0.1.0 could crash during a native save: its periodic journal flush used
+Forge's shared `savedata` accessor and could commit the game's pending `system`
+file concurrently. A disposable copy of the reported save reproduced the exact
+`001f4002` abort and missing temporary-file rename on stock Windows 0.14.2.
+The debugger widened the native rename window by 5.5 seconds to expose the race;
+the two threads committed the same filesystem object. The original save loaded
+and completed a native save successfully, so no older save was restored.
+
+HuntLog now uses its own SDK accessor for the same physical save directory.
+Reads do not commit or unmount the game's accessor. New files are committed
+empty before writing, avoiding the runtime's shared copy buffer. A creation or
+creation-commit failure disables further storage access until restart rather
+than risking a stale recovery file. Tests execute the real storage module and
+model both failure paths. Account readiness is checked before SDK calls; saved
+settings and fonts load once the account becomes available.
+
+The final 0.2.0 NRO is SHA-256
+`62e24c83b94fdde9b5b3438e3537b0d9e165858906bc4870f90fb81db4b936c7`.
+On the same stock Windows build with all twelve mod folders, native `system`
+and backup saves completed while journal commits used a separate filesystem
+object. The current 127 MB journal retained its prefix, and the existing 836-byte
+INI and configured font loaded. A fresh journal also followed empty-create,
+commit, reopen, then write. One normal lance hit reduced HP 1032 to 1025,
+displayed one Damage Numbers 7, and appended exactly one 7-damage hit record.
+These checks used isolated copied saves; all eight protected original files
+kept their hashes. Physical Windows hardware remains outside this Wine test.
 
 ## Installed-stack static audit
 

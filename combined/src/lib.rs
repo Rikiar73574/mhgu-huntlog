@@ -44,12 +44,14 @@ use forge::{
 // Forge 入口、更新和绘图。
 // 字体仅在 ImGui 初始化时写入，随后由同一渲染线程读取。
 static mut CUSTOM_FONT: Option<imgui::ImFont> = None;
+static CONFIG_LOADED: AtomicBool = AtomicBool::new(false);
+static IMGUI_READY: AtomicBool = AtomicBool::new(false);
 static MENU: Shared<plugin_config::Edit<Config>> =
     Shared::new(plugin_config::Edit::new(Config::DEFAULT));
 static FONT_INPUT: Shared<[u8; 168]> = Shared::new([0; 168]);
 
 // Debug build: record every valid contact/damage event, including teammates,
-// into savedata:/dps_debug.log. The display path still only shows local hits.
+// into the private huntlog:/dps_debug.log mount. The display path still only shows local hits.
 const DEBUG_LOG_CAP: usize = 262144;
 
 // true for the log-collection build; false for the clean DPS panel build.
@@ -609,11 +611,7 @@ fn main() {
     let timers_ok=timers::compatible(&monsters::GameMemory{base},base);
     TIMERS_AVAILABLE.store(timers_ok,Ordering::Relaxed);
     if !timers_ok {warn!("HuntLog: timer signatures mismatch; timer widget disabled");}
-    let config = load_config();
-    MENU.with(|edit| *edit = plugin_config::Edit::new(config));
-    set_font_input(config);
-    STATE.with(|state| state.config = config);
-    ENABLED.store(config.enabled, Ordering::Relaxed);
+    try_load_config();
     // Install after all plugins' forge_onInit so Damage Numbers can install first.
     info!(
         "mhgu-dps-meter v{}: hooks deferred, main=0x{base:08X}",
@@ -621,16 +619,31 @@ fn main() {
     );
 }
 
-fn load_config() -> Config {
+fn try_load_config() -> bool {
+    if CONFIG_LOADED.load(Ordering::Acquire) { return false; }
+    let Some(config) = load_config() else { return false; };
+    MENU.with(|edit| *edit = plugin_config::Edit::new(config));
+    set_font_input(config);
+    STATE.with(|state| state.config = config);
+    ENABLED.store(config.enabled, Ordering::Relaxed);
+    CONFIG_LOADED.store(true, Ordering::Release);
+    info!("HuntLog: save settings applied");
+    true
+}
+
+fn load_config() -> Option<Config> {
     let mut bytes = [0; CONFIG_MAX_BYTES];
     match plugin_config::DAMAGE.read(&mut bytes) {
         Ok(text) => match Config::parse(text) {
-            Ok(config) => return config,
+            Ok(config) => return Some(config),
             Err(error) => warn!("damage save INI line {}: {}", error.line, error.message),
         },
+        // Account initialization can follow plugin initialization. Retry later
+        // instead of retaining defaults for the entire session.
+        Err(plugin_config::ReadError::Unavailable) => return None,
         Err(error) => warn!("damage save INI: {error:?}; using defaults"),
     }
-    Config::DEFAULT
+    Some(Config::DEFAULT)
 }
 
 fn file_exists(path: &core::ffi::CStr) -> bool {
@@ -644,6 +657,13 @@ pub extern "C" fn forge_onImGuiInit(
     _alloc: *mut c_void,
     _free: *mut c_void,
 ) {
+    try_load_config();
+    load_custom_font();
+    IMGUI_READY.store(true, Ordering::Release);
+}
+
+fn load_custom_font() {
+    unsafe { CUSTOM_FONT = None };
     let config = STATE.with(|state| state.config);
     if let Some(file) = config.font_file {
         let path = file.path();
@@ -670,6 +690,11 @@ pub extern "C" fn forge_onImGuiInit(
 
 #[unsafe(no_mangle)]
 pub extern "C" fn forge_onUpdate(dt: f32) {
+    if !CONFIG_LOADED.load(Ordering::Acquire) && plugin_config::storage_ready() && try_load_config()
+        && IMGUI_READY.load(Ordering::Acquire) {
+        // Update precedes Forge's next ImGui frame; the font atlas is unlocked.
+        load_custom_font();
+    }
     let monsters = monsters::capture();
     MONSTERS.with(|value| *value = monsters);
     // 在游戏更新结束后投影；NVN 绘制回调只读插件快照，不访问游戏对象。

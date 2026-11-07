@@ -34,6 +34,10 @@ the dashboard and runtime dependencies; no separate Python installation is
 needed. Open a `hunter_hunts.jsonl` journal if the default save slot is elsewhere.
 The app reads records and does not edit your journal or character saves.
 
+Version 0.2.0 isolates journal writes from the game's native save transaction,
+fixing the save-time crash reported with 0.1.0. Existing settings and journals
+stay in their original location.
+
 Default Windows journal: `%APPDATA%\MHGURecomp\save\save_0\hunter_hunts.jsonl`.
 Linux/Wine defaults are detected by the application. Portable/custom saves can
 always be selected explicitly. Old records retain unknown fields when the

@@ -1,3 +1,4 @@
+.gitattributes
 .github/workflows/release.yml
 .gitignore
 HuntLog.url
@@ -64,6 +65,7 @@ combined/src/player_details_tests.rs
 combined/src/quest.rs
 combined/src/recorder.rs
 combined/src/recorder_tests.rs
+combined/src/storage_tests.rs
 combined/src/rewards.rs
 combined/src/status_events.rs
 combined/src/target.rs
