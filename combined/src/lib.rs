@@ -965,7 +965,7 @@ fn monster_label(m:&monsters::Monster,config:&Config)->&'static str {
 }
 fn status_rows(m: &monsters::Monster)->usize {
     if !m.selected || !m.revealed {return 0;}
-    (m.ailments.iter().filter(|(v,_)|*v>0).count()+usize::from(m.rage>0.0)+3)/4
+    (m.ailments.iter().copied().enumerate().filter(|&(i,p)|status_events::buildup_visible(i,p)).count()+usize::from(m.rage>0.0)+3)/4
 }
 fn detail_rows(m:&monsters::Monster,c:&Config)->usize {
     usize::from(c.show_location) + usize::from(c.show_weakness && m.weakness!=0)
@@ -1342,8 +1342,8 @@ fn draw_panel_scaled(dps:&DpsState,config:&Config,display:DisplayArea,monsters:&
         let mut tokens: [plugin_config::Text<32>;8] = core::array::from_fn(|_|plugin_config::Text::new());
         let mut n=0;
         if m.rage>0.0 {let _=write!(&mut tokens[n],"RAGE {}s",(m.rage/60.0+0.999) as u32);n+=1;}
-        for (i,(v,max)) in m.ailments.iter().enumerate(){if *v>0 {
-            let _=write!(&mut tokens[n],"{} {}%",["PSN","SLP","PAR","KO","EXH","MNT","BLST"][i],*v as i32*100/ *max as i32);n+=1;
+        for (i,&(v,max)) in m.ailments.iter().enumerate(){if status_events::buildup_visible(i,(v,max)) {
+            let _=write!(&mut tokens[n],"{} {}%",["PSN","SLP","PAR","KO","EXH","MNT","BLST"][i],v as i32*100/max as i32);n+=1;
         }}
         for group in tokens[..n].chunks(4) {
             for (col,token) in group.iter().enumerate() {

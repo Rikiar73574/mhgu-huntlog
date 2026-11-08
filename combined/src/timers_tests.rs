@@ -73,3 +73,21 @@ const P:u32=0x10000000;const E:u32=0x11000000;const S:u32=0x12000000;
  assert_eq!(map_timers::position(&m,P),Some((214.0,114.0)));
  m.put(P+0x54,0x02000000);assert_eq!(map_timers::position(&m,P),None);
 }
+
+#[test]fn elemental_blight_icons_use_their_own_remaining_timer(){
+ let mut m=Mem(BTreeMap::new());
+ // Native elemental flags are five pairs (minor/major), not buff flags.
+ for (minor,major,offset) in [(1,2,0x28ec),(4,8,0x28f4),(16,32,0x28f8),(64,128,0x28fc),(256,512,0x2900)]{
+  m.float(P+offset,1200.0);
+  for low in [minor,major]{
+   let icon=debuffs::Icon{node:S,actor:P,group:2,low,high:0,frame:0};
+   assert_eq!(debuffs::remaining(&m,icon),Some(20),"element flag {low:#x}");
+  }
+ }
+ let thunder=debuffs::Icon{node:S,actor:P,group:2,low:0x20,high:0,frame:0};
+ m.float(P+0x28f8,60.1);assert_eq!(debuffs::remaining(&m,thunder),Some(2));
+ m.float(P+0x28f8,3600.0);assert_eq!(debuffs::remaining(&m,thunder),Some(60));
+ m.float(P+0x28f8,0.0);assert_eq!(debuffs::remaining(&m,thunder),None);
+ // Two distinct elemental icons cannot share a truthful countdown.
+ assert_eq!(debuffs::remaining(&m,debuffs::Icon{low:1|16,..thunder}),None);
+}

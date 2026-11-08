@@ -85,6 +85,27 @@ are HuntLog/Damage Numbers `170968`, `09D6F8` and Armor Fusion/Compendium
 
 ## Runtime scope and known limitations
 
+### Elemental countdowns and guest buildup visibility
+
+Elemental-blight icon flags map to the five native remaining-time fields, with
+minor/major variants sharing a timer. Regression tests cover all variants,
+expiry, refresh and ambiguous multi-effect icons. KO, exhaust and mount retain
+valid thresholds at zero; the layout and renderer share the visibility rule.
+
+The Rust suite passes 161 cases, the Python suite 34, and the JavaScript parts
+check passes. `tools/verify_timer_arm.py` also executes the unmodified blight
+countdown routine and netEmAction receive block against isolated memory,
+checking KO/exhaust/mount updates and resets. This is not an end-to-end
+connected multiplayer test.
+
+A hidden Windows/Wine instance using a copied save and all seven installed
+plugins visibly showed Thunderblight decreasing from 0:30 to 0:10, then expiring,
+and KO 0%, EXH 0%, MNT 0% on a selected, discovered monster. The built NRO's
+SHA256 is `52f50cbab0908a1e02d35bec59226f2c771d48aa9cdb239ebdca5b8ee6d2135b`.
+The plugin stack uses 11,010,048 aligned bytes with 1,507,328 bytes remaining
+after loader headroom. Only the disposable test process was controlled and
+closed; the player's game was not restarted.
+
 The installed stack has twelve mod folders and seven NROs. Its existing World
 Sharpness Gauge stage-21 warning and ImGui mirror-pool warning reproduced with
 the original stack without Armor Fusion. The latter originates in the stock

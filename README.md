@@ -22,6 +22,10 @@ The gameplay HUD is passive. Names remain hidden until discovered by default.
 Part bars show live stagger and sever pools; part labels and required flinches
 depend on mapped metadata. A stagger does not automatically mean a part broke.
 Anatomical labels appear only when the complete pool signature matches.
+Selected, discovered monsters keep KO, exhaust and mount buildup visible at
+zero, including when joining another player's quest. Guest values follow the
+game's monster-action network updates. Elemental-blight icons show their own
+remaining countdown, including Thunderblight.
 Recording continues when the HUD or DPS display is hidden. The journal
 `hunter_hunts.jsonl` and `hunter_hud.ini` live beside the game's save files.
 HuntLog does not replace character saves. A crash can lose the buffered tail;

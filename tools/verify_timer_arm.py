@@ -33,4 +33,17 @@ for a,multiplier in [(P+0x287c,1.5),(P+0x2880,1.0),(S+0x1c4,1.0)]:
  fword(a,0.5);call(0x53aa84,P,a,multiplier);assert get(a)==0.0
 # Refresh overwrites the remaining value rather than accumulating it.
 call(0x2a6dc0,P,value=36000.0);assert get(P+0x287c)==36000.0
-print('Actual ARM routines passed: Hot/Cool Drink and paint setters, normal/extreme decay, expiry clamp, reapplication')
+# The five elemental-blight fields use the same native frame countdown.
+for offset in (0x28ec,0x28f4,0x28f8,0x28fc,0x2900):
+ fword(P+offset,1200.0);call(0x53aa84,P,P+offset,1.0);assert get(P+offset)==1140.0
+ fword(P+offset,0.5);call(0x53aa84,P,P+offset,1.0);assert get(P+offset)==0.0
+# Execute the unmodified netEmAction receive block: guests get the same
+# KO/exhaust/mount fields that HuntLog reads, including zero after a proc.
+packet=V+0x8000
+for values in ((60,25,100),(0,0,0)):
+ for offset,value in zip((0x44,0x46,0x4a),values):u.mem_write(packet+offset,struct.pack('<H',value))
+ u.reg_write(UC_ARM_REG_R4,P);u.reg_write(UC_ARM_REG_R5,packet)
+ u.emu_start(0xcc9d0,0xcca9c,count=100)
+ assert u.reg_read(UC_ARM_REG_PC)==0xcca9c
+ assert tuple(struct.unpack('<H',u.mem_read(S+offset,2))[0] for offset in (0x5d76,0x5d82,0x5d9a))==values
+print('Actual ARM routines passed: drink/paint setters and decay, all elemental-blight timers, guest KO/exhaust/mount receive and reset')

@@ -46,10 +46,7 @@ pub fn capture()->Snapshot {
   if hp>0 {m.status=Some(crate::status_events::Signals{flags:unsafe{read::<u8>(s+0x5e08)},counters:unsafe{[read::<u8>(s+0x5d8c),read::<u8>(s+0x5da4),read::<u8>(s+0x5da5),read::<u8>(s+0x5da6)]}});}
   let rage=unsafe {read::<f32>(s+0x514)};
   if rage>=0.0 && rage<=36000.0 {m.rage=rage;}
-  for (i,(a,b)) in [(0x5c94,0x5ca0),(0x5c98,0x5c96),(0x5cae,0x5cac),(0x5d76,0x5d78),(0x5d82,0x5d84),(0x5d9a,0x5d9c),(0x5daa,0x5da8)].iter().enumerate(){
-   let (v,max)=unsafe {(read::<i16>(s+a),read::<i16>(s+b))};
-   if v>0 && max>0 && v<=max {m.ailments[i]=(v,max);}
-  }
+  m.ailments=crate::status_events::buildups(&Direct,s);
   out.entries[out.count]=m;out.count+=1;
  }
  if let Some(i)=out.entries[..out.count].iter().position(|m|m.selected){out.entries[..=i].rotate_right(1);}
