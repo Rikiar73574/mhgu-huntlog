@@ -91,3 +91,17 @@ const P:u32=0x10000000;const E:u32=0x11000000;const S:u32=0x12000000;
  // Two distinct elemental icons cannot share a truthful countdown.
  assert_eq!(debuffs::remaining(&m,debuffs::Icon{low:1|16,..thunder}),None);
 }
+
+#[test]fn stench_icon_tracks_remaining_time_refresh_and_cure(){
+ let mut m=Mem(BTreeMap::new());
+ let stench=debuffs::Icon{node:S,actor:P,group:0,low:0x800,high:0,frame:0};
+ m.float(P+0x28dc,5400.0);assert_eq!(debuffs::remaining(&m,stench),Some(90));
+ m.float(P+0x28dc,2045.99);assert_eq!(debuffs::remaining(&m,stench),Some(35));
+ m.float(P+0x28dc,60.1);assert_eq!(debuffs::remaining(&m,stench),Some(2));
+ m.float(P+0x28dc,5400.0);assert_eq!(debuffs::remaining(&m,stench),Some(90));
+ let poison=debuffs::Icon{group:2,..stench};m.float(P+0x28c4,600.0);
+ assert_eq!(debuffs::remaining(&m,poison),Some(10));
+ for frames in [0.0,-1.0,f32::NAN,f32::INFINITY]{
+  m.float(P+0x28dc,frames);assert_eq!(debuffs::remaining(&m,stench),None);
+ }
+}

@@ -85,6 +85,20 @@ are HuntLog/Damage Numbers `170968`, `09D6F8` and Armor Fusion/Compendium
 
 ## Runtime scope and known limitations
 
+### Stench countdown
+
+Congalala's Stench uses group 0 mask `0x800` and the remaining frame timer at
+player `+0x28dc`. The native flag builder main+`29f358` calls its active-state
+predicate main+`2f5508`; main+`2f54f8` clears that timer on cure. The missing
+mapping is covered by a regression test for countdown, refresh, cure, invalid
+values and the separate group-2 poison icon sharing the same mask.
+
+All 162 Rust tests pass. Isolated execution also verifies the unmodified native
+icon predicate, frame decay, expiry and cure routines. A hidden copied-save
+Windows/Wine test with all seven installed plugins shows `1:30` at the Stench
+icon and a decreasing remaining counter. No writes or inputs were sent to the
+player's running game.
+
 ### Elemental countdowns and guest buildup visibility
 
 Elemental-blight icon flags map to the five native remaining-time fields, with
