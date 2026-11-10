@@ -215,3 +215,9 @@ CPython 3.12.10 and passed all 35 Python/Qt cases plus the packaged graph check
 under Wine 11.20. Physical Windows hardware remains untested. These desktop
 changes leave the verified Bubbleblight/Zinogre NRO above byte-for-byte intact.
 No input or memory writes were sent to the player's running game.
+
+Monster selection also fits the encounter range and synchronizes both sliders.
+The handler regression covers a late spawn, terminal zero, unloaded actors,
+first-hit fallback, missing data, single-point ranges and the all-monster reset.
+The saved Fated Four replay fitted Gammoth to 0:00–6:12 and Astalos to
+7:25–11:14; all-monster selection and Full hunt both restored 0:00–24:42.

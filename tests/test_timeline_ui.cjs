@@ -25,6 +25,22 @@ c.monster='2';assert.equal(c.series(r)[0].color,'blue','monster colors stay stab
 const gap=c.hpTimeline({...r,samples:[{t:100,monsters:[{id:1,hp:100}]},{t:105,monsters:[]},{t:110,monsters:[{id:1,hp:90}]},{t:115,monsters:[{id:1,hp:0}]}]},a);
 assert.equal(c.valueAt(gap,6),null,'missing observations must break the HP line');
 assert(gap.points.some(p=>p[1]===null));
+// Execute the real selector handler: changing a monster must update both zoom and sliders.
+const controls=Object.fromEntries(['monster','metric','window','from','to'].map(id=>[id,{}]));
+c.$=id=>controls[id];c.draw=()=>{};c.r=r;
+vm.runInContext(src.split('\n').find(line=>line.includes("$('monster').onchange=")),c);
+function selectMonster(id,run=r){c.r=run;controls.monster.onchange({target:{value:id}});return [c.lo,c.hi];}
+assert.deepEqual(selectMonster('2'),[20,50],'selecting a monster fits its spawn/death interval');
+assert.deepEqual([Number(controls.from.value),Number(controls.to.value)],[20,50],'range sliders must follow the fitted interval');
+assert.deepEqual(selectMonster('1'),[0,10],'dead monsters exclude the rest of the hunt');
+assert.deepEqual(selectMonster('3'),[30,50],'unloaded area 255 must not extend the interval');
+assert.deepEqual(selectMonster('all'),[0,50],'all monsters restores the full hunt');
+assert.deepEqual(selectMonster('2',{...r,hits:[{monster:2,t:118,damage:4}]}),[18,50],'damage before the first HP sample starts the interval');
+assert.deepEqual(selectMonster('2',{...r,samples:[],hits:[{monster:2,t:122,damage:4},{monster:2,t:135,damage:8}]}),[22,35],'legacy records fall back to damage times');
+assert.deepEqual(selectMonster('2',{...r,samples:[],hits:[]}),[0,50],'missing encounter times retain the full hunt');
+assert.deepEqual(selectMonster('1',{...r,hits:[{monster:1,t:140,damage:1}]}),[0,10],'hits after the recorded kill cannot extend the zoom');
+assert.deepEqual(selectMonster('2',{...r,samples:[],hits:[{monster:2,t:125,damage:1}]}),[24,26],'a single observation still has a usable zoom window');
+selectMonster('all');
 c.metric='damage';c.visible=new Set([1]);r.players=[{id:1,name:'Hunter'}];r.hits=[{t:110,player:1,monster:1,damage:10}];
 assert.equal(c.valueAt(c.series(r)[0],45),10,'cumulative damage stays visible after the kill');c.metric='hp';
 r.part_events=[{t:112,monster:1,slot:0,kind:'flinch',count:2},{t:114,monster:2,slot:1,kind:'secondary',count:1}];
@@ -47,4 +63,4 @@ assert.equal(grouped.length,2);assert.equal(grouped[0].events.length,2);assert.n
 assert.equal(c.positionEvents([{t:110,kind:'break',monster:1},{t:110,kind:'break',monster:2}],r,t=>t*2).length,2);
 const tip=c.eventTooltip([{kind:'flinch',partEvent:true,partName:'Head',count:2,flinchTarget:2},{kind:'break',partName:'Head',phase:'broken'}]);
 assert.equal(tip.match(/Head/g).length,1);assert.match(tip,/Flinch 2\/2/);assert.match(tip,/Broken/);
-console.log('Timeline: spawn/death bounds, gaps, zoom, confirmed breaks, secondary details and distinct markers passed');
+console.log('Timeline: encounter auto-zoom, spawn/death bounds, gaps, confirmed breaks and markers passed');

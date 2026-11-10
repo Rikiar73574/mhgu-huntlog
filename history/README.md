@@ -24,6 +24,10 @@ HP curves begin at the first valid, loaded observation and end at the first
 zero-HP sample, or the last valid sample if death was not recorded. Missing
 observations leave gaps. Hover values omit monsters outside those intervals;
 cumulative damage still retains damage dealt after a monster dies.
+Selecting a monster fits the time range to its first valid observation (or
+earlier recorded damage) through death. Without HP samples, recorded hit times
+provide the range; without either, the full hunt remains visible. Choosing all
+monsters restores the full hunt, and the sliders still allow manual zoom.
 
 Timeline symbols distinguish flinches, confirmed breaks, severs and status
 events. The legend explains each shape. Nearby events of the same kind and

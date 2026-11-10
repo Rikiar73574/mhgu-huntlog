@@ -1,5 +1,9 @@
-This release includes normal Zinogre charge tracking, Bubbleblight countdowns
-and a clearer hunt timeline in the Windows and Linux desktop apps.
+Selecting a monster now automatically zooms the timeline to that encounter,
+from its first valid observation or earlier damage through its recorded death.
+All large monsters restores the full hunt; manual zoom remains available.
+
+Includes the previous normal Zinogre charge tracking, Bubbleblight countdowns
+and timeline improvements in the Windows and Linux desktop apps.
 
 - Monster HP curves and hover values stop after death and stay hidden before the first valid observation. Missing samples leave gaps.
 - Distinct timeline symbols identify statuses, flinches, confirmed breaks and severs. Nearby events have count badges and mouse, touch and keyboard details.

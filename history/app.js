@@ -89,7 +89,7 @@ function renderList(){
  if(!runs.some(r=>r.run===selected)){selectRun(runs[0].run);return;}renderDetail();
 }
 function current(){return report.runs.find(r=>r.run===selected);}
-function selectRun(id){page='hunts';location.hash='hunts';selected=id;const r=current();monster=r.monsters.length===1?String(r.monsters[0].id):'all';visible=new Set(r.players.map(p=>p.id));lo=0;hi=r.duration_seconds;renderList();}
+function selectRun(id){page='hunts';location.hash='hunts';selected=id;const r=current();monster=r.monsters.length===1?String(r.monsters[0].id):'all';visible=new Set(r.players.map(p=>p.id));[lo,hi]=monsterRange(r,monster);renderList();}
 function monsterArt(m,cls='monster-art'){const icon=monsterIcons[m.name];return icon?`<img class="${cls}" src="${icon}" alt="" aria-hidden="true">`:'';}
 function monsterLabel(r,m){return `${m.name||'Unknown monster'}${r.monsters.filter(x=>x.species===m.species).length>1?`\n${r.monsters.filter(x=>x.species===m.species).findIndex(x=>x.id===m.id)+1}`:''}`;}
 function questHeading(r){
@@ -217,7 +217,7 @@ function renderDetail(){
  <button id="download" class="download">Download this run as JSON</button>`;
  $('flinches').onchange=e=>{showFlinches=e.target.checked;draw();};
  if($('monster'))$('monster').value=monster;$('metric').value=metric;$('window').value=windowSize;
- if($('monster'))$('monster').onchange=e=>{monster=e.target.value;draw();};$('metric').onchange=e=>{metric=e.target.value;draw();};$('window').onchange=e=>{windowSize=Number(e.target.value);draw();};
+ if($('monster'))$('monster').onchange=e=>{monster=e.target.value;[lo,hi]=monsterRange(r,monster);$('from').value=lo;$('to').value=hi;draw();};$('metric').onchange=e=>{metric=e.target.value;draw();};$('window').onchange=e=>{windowSize=Number(e.target.value);draw();};
  document.querySelectorAll('[data-player]').forEach(el=>el.onchange=()=>{const id=Number(el.dataset.player);el.checked?visible.add(id):visible.delete(id);draw();});
  $('from').oninput=e=>{lo=Math.min(Number(e.target.value),Math.max(0,hi-1));e.target.value=lo;draw();};$('to').oninput=e=>{hi=Math.max(Number(e.target.value),Math.min(r.duration_seconds,lo+1));e.target.value=hi;draw();};
  $('full').onclick=()=>{lo=0;hi=r.duration_seconds;$('from').value=lo;$('to').value=hi;draw();};
@@ -231,6 +231,16 @@ function hpTimeline(r,m){
   start??=t;end=t;points.push([t,row.hp]);if(row.hp===0)break;
  }
  return {points,start,end};
+}
+function monsterRange(r,id){
+ const m=r.monsters.find(m=>String(m.id)===id);if(!m)return [0,r.duration_seconds];
+ let {start,end,points}=hpTimeline(r,m);const killed=points.at(-1)?.[1]===0;
+ for(const h of r.hits)if(h.monster===m.id&&h.damage>0&&Number.isFinite(h.t)){
+  const t=h.t-r.started_at;start=start==null?t:Math.min(start,t);if(!killed)end=end==null?t:Math.max(end,t);
+ }
+ if(start==null)return [0,r.duration_seconds];
+ start=Math.max(0,Math.min(r.duration_seconds,start));end=Math.max(start,Math.min(r.duration_seconds,end??r.duration_seconds));
+ if(end===start){start=Math.max(0,start-1);end=Math.min(r.duration_seconds,end+1);}return [start,end];
 }
 function valueAt(line,t){
  if(line.start!=null&&t<line.start||line.end!=null&&t>line.end)return null;
