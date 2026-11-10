@@ -105,3 +105,20 @@ const P:u32=0x10000000;const E:u32=0x11000000;const S:u32=0x12000000;
   m.float(P+0x28dc,frames);assert_eq!(debuffs::remaining(&m,stench),None);
  }
 }
+
+#[test]fn bubble_icon_tracks_its_shared_timer_across_variants(){
+ let mut m=Mem(BTreeMap::new());
+ // Exact native second-icon table entry 18: group 0, low 0x200000, high 6.
+ let bubble=debuffs::Icon{node:S,actor:P,group:0,low:0x200000,high:6,frame:0};
+ m.float(P+0x2944,2400.0);assert_eq!(debuffs::remaining(&m,bubble),Some(40));
+ for (low,high) in [(0x200000,0),(0,2),(0,4)]{
+  assert_eq!(debuffs::remaining(&m,debuffs::Icon{low,high,..bubble}),Some(40));
+ }
+ m.float(P+0x2944,60.1);assert_eq!(debuffs::remaining(&m,bubble),Some(2));
+ m.float(P+0x2944,2400.0);assert_eq!(debuffs::remaining(&m,bubble),Some(40));
+ // A cycling icon with two different timers must not invent a duration.
+ assert_eq!(debuffs::remaining(&m,debuffs::Icon{high:6|8,..bubble}),None);
+ for frames in [0.0,-1.0,f32::NAN,f32::INFINITY,216001.0]{
+  m.float(P+0x2944,frames);assert_eq!(debuffs::remaining(&m,bubble),None);
+ }
+}

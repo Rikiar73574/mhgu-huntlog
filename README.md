@@ -26,6 +26,7 @@ Selected, discovered monsters keep KO, exhaust and mount buildup visible at
 zero, including when joining another player's quest. Guest values follow the
 game's monster-action network updates. Elemental-blight icons show their own
 remaining countdown, including Thunderblight.
+Bubbleblight's icon also shows its native remaining duration across its variants.
 Normal Zinogre also shows its charged state and a 0–100 charge-point meter.
 Charge points are not remaining HP damage. Numeric progress is shown only on
 the instance running its AI; remote copies show “value unavailable” until that

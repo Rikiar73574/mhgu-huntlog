@@ -47,6 +47,20 @@ for frames in (5400.0,60.1,0.5,0.0):
  call(0x53aa84,P,P+0x28dc,1.0);assert abs(get(P+0x28dc)-max(0.0,frames-60.0))<0.001,(frames,get(P+0x28dc))
 fword(P+0x28dc,5400.0);call(0x2f54f8,P);assert get(P+0x28dc)==0.0
 call(0x2f5508,P);assert u.reg_read(UC_ARM_REG_R0)==0
+# Bubble: the real cycling HUD entry combines three flags for one timer.
+entry=bytes(n.image[0x16395b0+18*16:0x16395b0+19*16])
+assert entry[0]==0 and struct.unpack_from('<II',entry,8)==(0x200000,6)
+for variant,low,high in [(0,0x200000,0),(1,0,2),(2,0,4)]:
+ word(P+0x2940,1);word(P+0x2960,variant)
+ u.reg_write(UC_ARM_REG_R4,P);u.reg_write(UC_ARM_REG_R6,0);u.reg_write(UC_ARM_REG_R7,0)
+ u.emu_start(0x29f27c,0x29f2e0,count=100)
+ assert (u.reg_read(UC_ARM_REG_R6),u.reg_read(UC_ARM_REG_R7))==(low,high)
+fword(P+0x2944,2400.0);call(0x53aa84,P,P+0x2944,1.0);assert get(P+0x2944)==2340.0
+fword(P+0x2944,0.5);call(0x53aa84,P,P+0x2944,1.0);assert get(P+0x2944)==0.0
+fword(P+0x2944,2400.0);word(P+0x2940,1)
+u.reg_write(UC_ARM_REG_R4,P);u.reg_write(UC_ARM_REG_R5,0)
+u.emu_start(0x2f540c,0x2f5474,count=100)
+assert get(P+0x2944)==0.0 and struct.unpack('<I',u.mem_read(P+0x2940,4))[0]==0
 # Execute the unmodified netEmAction receive block: guests get the same
 # KO/exhaust/mount fields that HuntLog reads, including zero after a proc.
 packet=V+0x8000
@@ -56,4 +70,4 @@ for values in ((60,25,100),(0,0,0)):
  u.emu_start(0xcc9d0,0xcca9c,count=100)
  assert u.reg_read(UC_ARM_REG_PC)==0xcca9c
  assert tuple(struct.unpack('<H',u.mem_read(S+offset,2))[0] for offset in (0x5d76,0x5d82,0x5d9a))==values
-print('Actual ARM routines passed: drink/paint setters and decay, elemental timers, Stench icon/countdown/cure, guest KO/exhaust/mount receive and reset')
+print('Actual ARM routines passed: drink/paint setters and decay, elemental timers, Stench and Bubble icons/countdowns/cures, guest KO/exhaust/mount receive and reset')

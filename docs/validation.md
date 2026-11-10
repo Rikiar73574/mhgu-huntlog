@@ -171,3 +171,24 @@ The installed plugin set requires 11,927,552 aligned bytes, leaving 589,824
 bytes after loader headroom. Existing mod warnings are not claimed fixed.
 The rebuilt Linux desktop passes its packaged graph smoke test with a charge
 event in the journal. The Windows desktop was not rebuilt in this check.
+
+## Bubbleblight icon countdown
+
+The second cycling-icon table's entry 18 combines group-0 flags low `0x200000`
+and high `0x6`. The native flag builder at main+`0x29f27c` selects these three
+variants; each uses the hunter's remaining-time field `+0x2944`. The overlay
+previously had no mapping for this entry. A single shared mapping now follows
+its native frame countdown and clears on expiry/removal.
+
+The regression failed before the mapping and passes afterward, covering all
+three masks, refresh, expiry, invalid values and ambiguous mixed timers.
+All 179 Rust cases and 35 Python cases pass, as do the two JavaScript checks.
+`tools/verify_timer_arm.py` executes the original icon-flag, decay and cure
+instructions in isolated ARM memory; no main-game memory is written.
+
+A separate hidden Windows/Wine hunt with a copied save and seven plugins
+showed the bubble icon at 0:30, then 0:28, and removed the icon/countdown when
+its timer was cleared. Effect fields were set only in that disposable process
+for the rendering check; this was not a natural Mizutsune encounter. The
+verified NRO SHA256 is
+`465d288f6ba9d663e93d72e8518bba52c6a0a2a25da911ef6f5a223669faaf34`.
