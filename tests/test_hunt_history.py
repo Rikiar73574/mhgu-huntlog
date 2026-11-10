@@ -69,6 +69,16 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(report["warning_count"],len(bad))
         self.assertEqual(report["runs"][0]["loot"],[])
 
+    def test_charge_points_and_state_events_remain_available(self):
+        charge=dict(active=True,points=75,maximum=100,units="charge_points")
+        report=self.read([row(1,"start",0),row(1,"sample",1,players=[],monsters=[dict(id=1,charge=charge)]),
+            row(1,"status",2,monster=1,kind="zinogre_charge",phase="end",count=1)])
+        run=report["runs"][0]
+        self.assertEqual(report["warning_count"],0)
+        self.assertEqual(run["monsters"][0]["charge"],charge)
+        self.assertEqual(run["samples"][0]["monsters"][0]["charge"]["points"],75)
+        self.assertEqual(run["status_events"][0]["phase"],"end")
+
     def test_status_events_and_per_monster_hit_counts(self):
         rows = [row(1,"start",0,status_tracking=True),
                 row(1,"sample",0,monsters=[dict(id=1),dict(id=2)],players=[dict(id=1)]),

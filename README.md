@@ -26,6 +26,12 @@ Selected, discovered monsters keep KO, exhaust and mount buildup visible at
 zero, including when joining another player's quest. Guest values follow the
 game's monster-action network updates. Elemental-blight icons show their own
 remaining countdown, including Thunderblight.
+Normal Zinogre also shows its charged state and a 0–100 charge-point meter.
+Charge points are not remaining HP damage. Numeric progress is shown only on
+the instance running its AI; remote copies show “value unavailable” until that
+custom counter’s replication is verified. Charged/discharged transitions and
+sampled charge values are saved in the hunt journal and shown on the timeline.
+Thunderlord is not included in this normal-Zinogre mapping.
 Recording continues when the HUD or DPS display is hidden. The journal
 `hunter_hunts.jsonl` and `hunter_hud.ini` live beside the game's save files.
 HuntLog does not replace character saves. A crash can lose the buffered tail;

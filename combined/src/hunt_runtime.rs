@@ -69,6 +69,12 @@ fn sample(r:&mut Runtime,base:u32,monsters:&monsters::Snapshot,observation:Obser
   let id=r.rec.monster_id(identity(m));
   let _=write!(line,"{{\"id\":{},\"network_id\":{},\"species\":{},\"hp\":{},\"max_hp\":{},\"area\":{},\"size_scale\":",id,m.network,m.species,m.hp,m.max_hp,m.room);
   if m.size_scale>0.0{let _=write!(line,"{}",m.size_scale);}else{let _=line.write_str("null");}
+  let _=line.write_str(",\"charge\":");
+  if let Some(charge)=m.charge {
+   let _=write!(line,"{{\"active\":{},\"points\":",charge.active);
+   if let Some(points)=charge.points{let _=write!(line,"{}",points);}else{let _=line.write_str("null");}
+   let _=line.write_str(",\"maximum\":100,\"units\":\"charge_points\"}");
+  }else{let _=line.write_str("null");}
   crate::parts::append(&mut line,crate::parts::capture(&monsters::GameMemory{base},m.object,m.species));
   let _=line.write_str(",\"name\":");
   let _=recorder::quoted(&mut line,monsters::name(m.species).unwrap_or("Unknown"));

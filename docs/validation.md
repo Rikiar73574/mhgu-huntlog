@@ -148,3 +148,26 @@ Windows: actual x64 PE built with CPython 3.12.10, Qt 6.11.2 and PyInstaller 6.2
 Linux: build target is Ubuntu 22.04, Python 3.10.12 and glibc 2.35. The initial bundle passed container checks but exposed a real forward-compatibility problem on the newer host: its bundled C++ runtime lacked a graphics-driver symbol, and its bundled fontconfig rejected the host font configuration. A controlled comparison reproduced the failure only in the bundle; excluding those two system libraries restored normal windowed rendering without test Qt flags. Other libraries remained unchanged. The build helper now applies this policy before checksumming.
 
 The app and parser code are shared between both platforms. Both bundles include their Python/Qt runtime, licenses and per-file checksums. They require no separately installed Python. Keep each extracted application folder together.
+
+## Normal Zinogre charge
+
+The guarded decoder reads normal Zinogre's native 0..100 charge points and
+charged-state flag. Original ARM instruction checks cover the getter, entry,
+100-point initialization, event depletion and exit. These are charge points,
+not a universal HP-damage requirement. Numeric values require local AI
+authority; remote values remain unavailable. Thunderlord is excluded.
+
+The Rust suites pass 178 cases, Python passes 35, and both JavaScript checks
+pass. An isolated Windows/Wine game with a copied save and seven plugins
+rendered the selected, discovered Zinogre at 0/100, 75/100, 100/100 and value
+unavailable. Controlled writes affected only that disposable process; these
+render checks do not establish natural combat depletion or connected guest
+synchronization. Its journal contained charge start/end events and all four
+sample values, parsed without warnings. The headless game was then closed.
+
+Candidate NRO SHA256:
+`ba405e1cbc2c217bd89f25153e237394ffdce3eeaaaf155028eeef3e12689750`.
+The installed plugin set requires 11,927,552 aligned bytes, leaving 589,824
+bytes after loader headroom. Existing mod warnings are not claimed fixed.
+The rebuilt Linux desktop passes its packaged graph smoke test with a charge
+event in the journal. The Windows desktop was not rebuilt in this check.

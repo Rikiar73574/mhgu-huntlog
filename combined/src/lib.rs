@@ -8,7 +8,7 @@ mod quest;
 mod recorder;
 mod monster_size;
 mod hunt_runtime;
-mod status_events;
+mod status_events;mod charge;
 mod item_events;mod part_names;mod parts;mod player_details;mod rewards;
 mod target;
 mod layout;
@@ -965,7 +965,7 @@ fn monster_label(m:&monsters::Monster,config:&Config)->&'static str {
 }
 fn status_rows(m: &monsters::Monster)->usize {
     if !m.selected || !m.revealed {return 0;}
-    (m.ailments.iter().copied().enumerate().filter(|&(i,p)|status_events::buildup_visible(i,p)).count()+usize::from(m.rage>0.0)+3)/4
+    (m.ailments.iter().copied().enumerate().filter(|&(i,p)|status_events::buildup_visible(i,p)).count()+usize::from(m.rage>0.0)+3)/4+usize::from(m.charge.is_some())
 }
 fn detail_rows(m:&monsters::Monster,c:&Config)->usize {
     usize::from(c.show_location) + usize::from(c.show_weakness && m.weakness!=0)
@@ -1196,6 +1196,7 @@ fn draw_panel_scaled(dps:&DpsState,config:&Config,display:DisplayArea,monsters:&
         width=width.max(pad*2.0+12.0*scale+measure_text(&font,font_size,monster_label(m,config))+20.0*scale+measure_text(&font,font_size,stats.as_str()));
     }
     for m in &monsters.entries[..monsters.count] {
+        if m.selected&&m.revealed&&m.charge.is_some_and(|c|c.points.is_none()) {width=width.max(pad*2.0+measure_text(&font,font_size*0.85,"Charged (value unavailable)"));}
         if let Some(snapshot)=m.parts {for p in &snapshot.parts {if p.visible(config.always_show_parts,config.show_breakable_hp,config.show_all_parts_hp){
             let mut label=plugin_config::Text::<128>::new();let _=write!(&mut label,"{}",if p.name.is_empty(){"Part"}else{p.name});
             if p.groups!=0{let _=write!(&mut label," · {}/{} broken",(p.groups&snapshot.breaks).count_ones(),p.groups.count_ones());}else if p.severable(){let _=write!(&mut label," · SEVERABLE");}
@@ -1345,6 +1346,19 @@ fn draw_panel_scaled(dps:&DpsState,config:&Config,display:DisplayArea,monsters:&
         for (i,&(v,max)) in m.ailments.iter().enumerate(){if status_events::buildup_visible(i,(v,max)) {
             let _=write!(&mut tokens[n],"{} {}%",["PSN","SLP","PAR","KO","EXH","MNT","BLST"][i],v as i32*100/max as i32);n+=1;
         }}
+        if let Some(charge)=m.charge {
+            let mut label=plugin_config::Text::<64>::new();
+            let state=if charge.active{"Charged"}else{"Charge"};
+            if let Some(points)=charge.points {let _=write!(&mut label,"{} {}/100",state,points);}else{let _=write!(&mut label,"{} (value unavailable)",state);}
+            let color=if charge.active{imgui::color(115,181,235,255)}else{imgui::color(178,186,196,255)};
+            draw.add_text_with_font(&font,font_size*0.85,ImVec2::new(x+pad,text_y-5.0*scale),color,label.as_str());
+            if let Some(points)=charge.points {
+                let left=x+width*0.60;let right=x+width-pad;
+                draw.add_rect_filled(ImVec2::new(left,text_y+1.0*scale),ImVec2::new(right,text_y+4.0*scale),imgui::color(62,68,76,255),0.0);
+                draw.add_rect_filled(ImVec2::new(left,text_y+1.0*scale),ImVec2::new(left+(right-left)*f32::from(points)/100.0,text_y+4.0*scale),color,0.0);
+            }
+            text_y+=status_h;
+        }
         for group in tokens[..n].chunks(4) {
             for (col,token) in group.iter().enumerate() {
                 draw.add_text_with_font(&font,font_size*0.85,ImVec2::new(x+pad+col as f32*(width-pad*2.0)/4.0,text_y-5.0*scale),imgui::color(178,186,196,255),token.as_str());

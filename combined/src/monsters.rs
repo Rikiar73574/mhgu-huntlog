@@ -1,10 +1,10 @@
 //! Read-only MHGU 1.4.0 monster snapshot; all pointer reads stay on update thread.
 #[derive(Clone, Copy, Default)]
 pub struct Monster { pub object: u32, pub species: u16, pub hp: i32, pub max_hp: i32,
- pub network:u16, pub size_scale:f32, pub room:u8, pub weakness:u8, pub selected:bool, pub revealed:bool, pub rage: f32, pub parts:Option<crate::parts::Snapshot>, pub status:Option<crate::status_events::Signals>, pub ailments: [(i16,i16);7] }
+ pub network:u16, pub size_scale:f32, pub room:u8, pub weakness:u8, pub selected:bool, pub revealed:bool, pub rage: f32, pub charge:Option<crate::charge::Snapshot>, pub parts:Option<crate::parts::Snapshot>, pub status:Option<crate::status_events::Signals>, pub ailments: [(i16,i16);7] }
 #[derive(Clone, Copy)]
 pub struct Snapshot { pub count: usize, pub entries: [Monster;10] }
-impl Snapshot { pub const EMPTY: Self=Self { count:0, entries:[Monster {object:0,species:0,hp:0,max_hp:0,network:0,size_scale:0.0,room:0,weakness:0,selected:false,revealed:false,rage:0.0,parts:None,status:None,ailments:[(0,0);7]};10] }; }
+impl Snapshot { pub const EMPTY: Self=Self { count:0, entries:[Monster {object:0,species:0,hp:0,max_hp:0,network:0,size_scale:0.0,room:0,weakness:0,selected:false,revealed:false,rage:0.0,charge:None,parts:None,status:None,ailments:[(0,0);7]};10] }; }
 fn valid(a:u32,n:u32)->bool { a>=0x08000000 && a<0xa8000000 && n<=0xa8000000-a }
 unsafe fn read<T:Copy>(a:u32)->T { unsafe { core::ptr::read_volatile(a as *const T) } }
 unsafe extern "C" { fn forge_singleton_getInstanceByName(name:*const core::ffi::c_char)->*mut core::ffi::c_void; }
@@ -29,6 +29,7 @@ pub fn capture()->Snapshot {
   if id>=10000 || max_hp<=0 || max_hp>200000 || hp<0 || hp>max_hp || name(species).is_none(){continue;}
   let mut m=Monster {object:obj,species,hp,max_hp,selected:target.selected==obj,revealed:target.revealed(obj,species),..Monster::default()};
   m.parts=crate::parts::capture(&GameMemory{base},obj,species);
+  if hp>0 {m.charge=crate::charge::capture(&GameMemory{base},base,obj,s,species);}
   m.network=id;
   let size=unsafe {read::<f32>(s+0x1b0)};
   if size.is_finite() && size>0.0 && size<100.0 {m.size_scale=size;}
@@ -43,7 +44,7 @@ pub fn capture()->Snapshot {
    }
    m.weakness=crate::weakness::strongest(best);
   }
-  if hp>0 {m.status=Some(crate::status_events::Signals{flags:unsafe{read::<u8>(s+0x5e08)},counters:unsafe{[read::<u8>(s+0x5d8c),read::<u8>(s+0x5da4),read::<u8>(s+0x5da5),read::<u8>(s+0x5da6)]}});}
+  if hp>0 {m.status=Some(crate::status_events::Signals{charge:m.charge.map(|c|c.active),flags:unsafe{read::<u8>(s+0x5e08)},counters:unsafe{[read::<u8>(s+0x5d8c),read::<u8>(s+0x5da4),read::<u8>(s+0x5da5),read::<u8>(s+0x5da6)]}});}
   let rage=unsafe {read::<f32>(s+0x514)};
   if rage>=0.0 && rage<=36000.0 {m.rage=rage;}
   m.ailments=crate::status_events::buildups(&Direct,s);

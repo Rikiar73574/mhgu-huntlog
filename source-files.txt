@@ -11,6 +11,7 @@ assets/fonts/NotoSansSC-Medium.otf
 assets/fonts/OFL.txt
 combined/.cargo/config.toml
 combined/.gitignore
+combined/CHARGE-RESEARCH.md
 combined/Cargo.lock
 combined/Cargo.toml
 combined/EQUIPMENT-DETAILS.md
@@ -46,6 +47,8 @@ combined/link/switch32.ld
 combined/rust-toolchain.toml
 combined/shared/config_storage.rs
 combined/shared/plugin_config.rs
+combined/src/charge.rs
+combined/src/charge_tests.rs
 combined/src/data.rs
 combined/src/debuffs.rs
 combined/src/hook_policy.rs
@@ -65,9 +68,9 @@ combined/src/player_details_tests.rs
 combined/src/quest.rs
 combined/src/recorder.rs
 combined/src/recorder_tests.rs
-combined/src/storage_tests.rs
 combined/src/rewards.rs
 combined/src/status_events.rs
+combined/src/storage_tests.rs
 combined/src/target.rs
 combined/src/targeting.rs
 combined/src/timers.rs
@@ -110,6 +113,7 @@ licenses/compiler-builtins-LICENSE.txt
 licenses/log-MIT.txt
 requirements-desktop.txt
 source-files.txt
+tests/test_charge_ui.cjs
 tests/test_desktop.py
 tests/test_desktop_qt.py
 tests/test_hunt_history.py
@@ -133,6 +137,7 @@ tools/package.py
 tools/player_names.py
 tools/serve_history.py
 tools/smoke_app.py
+tools/verify_charge_arm.py
 tools/verify_draw_guard_arm.py
 tools/verify_game_target_arm.py
 tools/verify_timer_arm.py

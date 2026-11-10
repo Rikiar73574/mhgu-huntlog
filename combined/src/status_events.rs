@@ -9,10 +9,10 @@ pub fn buildups(m:&impl crate::target::Memory,state:u32)->[(i16,i16);7]{
 // Keep KO, exhaust and mount visible through zero/reset on host and guest.
 pub fn buildup_visible(index:usize,(value,max):(i16,i16))->bool{max>0&&(value>0||(3..=5).contains(&index))}
 #[derive(Clone,Copy,Default)]
-pub struct Signals {pub flags:u8,pub counters:[u8;4]}
+pub struct Signals {pub charge:Option<bool>,pub flags:u8,pub counters:[u8;4]}
 #[derive(Clone,Copy)]
 struct Previous {signals:Signals,seen:bool,known:bool}
-impl Previous {const EMPTY:Self=Self{signals:Signals{flags:0,counters:[0;4]},seen:false,known:false};}
+impl Previous {const EMPTY:Self=Self{signals:Signals{charge:None,flags:0,counters:[0;4]},seen:false,known:false};}
 pub struct Tracker {last:[Previous;64],present:[bool;64]}
 impl Tracker {
  pub const fn new()->Self{Self{last:[Previous::EMPTY;64],present:[false;64]}}
@@ -23,6 +23,10 @@ impl Tracker {
    let active=next.flags&mask!=0;let before=old.signals.flags&mask!=0;
    if !old.known||!old.seen{if active{emit(name,"observed",1);}}
    else if active!=before{emit(name,if active{"start"}else{"end"},1);}
+  }
+  if let Some(active)=next.charge {
+   if old.known&&old.seen {if let Some(before)=old.signals.charge {if active!=before {emit("zinogre_charge",if active{"start"}else{"end"},1);}}else if active{emit("zinogre_charge","observed",1);}}
+   else if active{emit("zinogre_charge","observed",1);}
   }
   if old.known&&old.seen{for (j,name) in ["exhaust_proc","mount_opening","mount_ended","blast"].iter().enumerate(){if next.counters[j]>old.signals.counters[j]{emit(name,"trigger",next.counters[j]-old.signals.counters[j]);}}}
   self.last[i]=Previous{signals:next,seen:true,known:true};
@@ -52,6 +56,14 @@ impl Tracker {
   assert!(buildups(&m,state).iter().copied().enumerate().all(|(i,p)|!buildup_visible(i,p)));
   assert!(!buildup_visible(0,(0,180)));assert!(buildup_visible(0,(60,180)));
  }
- #[test]fn transitions_not_buildup_and_no_initial_counter_replay(){let mut t=Tracker::new();let mut e=Vec::new();t.begin();t.observe(1,Signals{flags:2,counters:[3,2,1,4]},|a,b,c|e.push((a,b,c)));t.finish();assert_eq!(e,vec![("poison","observed",1)]);e.clear();t.begin();t.observe(1,Signals{flags:4,counters:[4,3,2,6]},|a,b,c|e.push((a,b,c)));t.finish();assert!(e.contains(&("poison","end",1)));assert!(e.contains(&("paralysis","start",1)));assert!(e.contains(&("blast","trigger",2)));assert!(e.contains(&("mount_ended","trigger",1)));}
- #[test]fn absence_reset_and_distinct_monsters_do_not_create_procs(){let mut t=Tracker::new();let mut e=Vec::new();t.begin();t.observe(1,Signals{flags:0,counters:[5;4]},|_,_,_|{});t.finish();t.begin();t.finish();t.begin();t.observe(1,Signals{flags:4,counters:[7;4]},|a,b,c|e.push((a,b,c)));t.observe(2,Signals::default(),|a,b,c|e.push((a,b,c)));t.finish();assert_eq!(e,vec![("paralysis","observed",1)]);e.clear();t.begin();t.observe(1,Signals{flags:4,counters:[0;4]},|a,b,c|e.push((a,b,c)));t.finish();assert!(e.is_empty());}
+ #[test]fn charge_transitions_and_reacquisition_are_not_fabricated(){
+  let mut t=Tracker::new();let mut events=Vec::new();
+  for (state,expected) in [(Some(false),None),(Some(true),Some("start")),(Some(false),Some("end")),(None,None),(Some(true),Some("observed"))]{
+   events.clear();t.begin();t.observe(1,Signals{charge:state,..Signals::default()},|k,p,_|events.push((k,p)));t.finish();
+   assert_eq!(events,expected.map(|p|vec![("zinogre_charge",p)]).unwrap_or_default());
+  }
+  t.begin();t.finish();events.clear();t.begin();t.observe(1,Signals{charge:Some(true),..Signals::default()},|k,p,_|events.push((k,p)));t.finish();assert_eq!(events,vec![("zinogre_charge","observed")]);
+ }
+ #[test]fn transitions_not_buildup_and_no_initial_counter_replay(){let mut t=Tracker::new();let mut e=Vec::new();t.begin();t.observe(1,Signals{charge:None,flags:2,counters:[3,2,1,4]},|a,b,c|e.push((a,b,c)));t.finish();assert_eq!(e,vec![("poison","observed",1)]);e.clear();t.begin();t.observe(1,Signals{charge:None,flags:4,counters:[4,3,2,6]},|a,b,c|e.push((a,b,c)));t.finish();assert!(e.contains(&("poison","end",1)));assert!(e.contains(&("paralysis","start",1)));assert!(e.contains(&("blast","trigger",2)));assert!(e.contains(&("mount_ended","trigger",1)));}
+ #[test]fn absence_reset_and_distinct_monsters_do_not_create_procs(){let mut t=Tracker::new();let mut e=Vec::new();t.begin();t.observe(1,Signals{charge:None,flags:0,counters:[5;4]},|_,_,_|{});t.finish();t.begin();t.finish();t.begin();t.observe(1,Signals{charge:None,flags:4,counters:[7;4]},|a,b,c|e.push((a,b,c)));t.observe(2,Signals::default(),|a,b,c|e.push((a,b,c)));t.finish();assert_eq!(e,vec![("paralysis","observed",1)]);e.clear();t.begin();t.observe(1,Signals{charge:None,flags:4,counters:[0;4]},|a,b,c|e.push((a,b,c)));t.finish();assert!(e.is_empty());}
 }

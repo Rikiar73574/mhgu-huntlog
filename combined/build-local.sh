@@ -29,7 +29,7 @@ if [[ "$mode" != --test-only ]]; then
     cargo +"$toolchain" build "${cargo_args[@]}"
     python3 ../tools/elf_to_nro.py target/armv7a-none-eabi/release/libmhgu_dps_meter.so ../build/hunter_hud.nro
 fi
-for unit in data layout target weakness recorder recorder_tests hunt_runtime_tests timers_tests player_details_tests hook_policy storage_tests; do
+for unit in charge_tests data layout target weakness recorder recorder_tests hunt_runtime_tests timers_tests player_details_tests hook_policy storage_tests; do
     rustc +"$toolchain" --edition 2024 --test "src/$unit.rs" -o "../build/test_$unit"
     "../build/test_$unit" --test-threads=1
 done

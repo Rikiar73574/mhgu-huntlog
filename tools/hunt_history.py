@@ -76,7 +76,7 @@ def validate(row):
     elif event == "status":
         if not integer(row.get("monster")) or row["monster"] < 1:
             raise ValueError("invalid status monster")
-        if row.get("kind") not in ("sleep", "poison", "paralysis", "stun", "exhaust_proc", "mount_opening", "mount_ended", "blast") or row.get("phase") not in ("start", "end", "observed", "trigger"):
+        if row.get("kind") not in ("sleep", "poison", "paralysis", "stun", "exhaust_proc", "mount_opening", "mount_ended", "blast", "zinogre_charge") or row.get("phase") not in ("start", "end", "observed", "trigger"):
             raise ValueError("invalid status signal")
         if not integer(row.get("count")) or not 1 <= row["count"] <= 255:
             raise ValueError("invalid status count")
@@ -128,7 +128,7 @@ def read_journal(lines):
             elif event == "sample":
                 for item in row["monsters"]:
                     target = monster(run, item["id"])
-                    for field in ("species", "name", "hp", "max_hp", "size", "size_scale", "crown", "outcome", "parts", "break_mask"):
+                    for field in ("species", "name", "hp", "max_hp", "size", "size_scale", "crown", "outcome", "parts", "break_mask", "charge"):
                         if field in item:
                             target[field] = item[field]
                 for item in row["players"]:
