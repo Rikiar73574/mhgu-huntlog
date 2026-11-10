@@ -20,6 +20,23 @@ Monster sections contain per-monster hunter damage, recorded hit-event count and
 
 Recorder v2 logs verified sampled status-flag transitions and counter increases. Graph events respect the monster selector and visible time range. Mount openings and mount endings do not assert successful topples; exhaust procs do not assert timed fatigue. Initial/reacquired active states are observations, not known start times. Saturated game counters cannot report further procs. Old runs have no status coverage and cannot be backfilled from damage data.
 
+HP curves begin at the first valid, loaded observation and end at the first
+zero-HP sample, or the last valid sample if death was not recorded. Missing
+observations leave gaps. Hover values omit monsters outside those intervals;
+cumulative damage still retains damage dealt after a monster dies.
+
+Timeline symbols distinguish flinches, confirmed breaks, severs and status
+events. The legend explains each shape. Nearby events of the same kind and
+monster share a symbol with a count badge; hover or select it to read the
+individual events. Keyboard users can Tab to symbols, press Enter or Space
+to inspect, and Escape to dismiss. Hiding flinches leaves confirmed breaks
+visible. Breaks come from recorded break flags, not a presumed flinch target.
+
+Secondary part pools show their recorded count and required count when known.
+Verified tail pools say "Sever progress"; other pools say "Additional damage
+threshold". The journal does not yet identify a specific effect for every
+secondary pool, so these do not claim snow removal or another named reaction.
+
 ## Desktop applications
 
 Extract the Windows or Linux desktop archive and run HuntLog. Runtime dependencies

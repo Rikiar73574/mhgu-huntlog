@@ -35,3 +35,6 @@
 
 /* Present separate facts on their own lines throughout the journal. */
 .run-meta,.run-outcome,.overview-stat small,.overview-ranking small,.quest-rank,.gear-detail small,.part-details small,.monster-identity small,.monster-identity strong,.run-heading h2,.tooltip,#notice,.loadout-rows dd{white-space:pre-line}
+
+.event-legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:14px 0 0;font-size:12px}.event-legend>span{display:flex;align-items:center;gap:6px}.event-legend svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.event-symbol{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.event-symbol rect{fill:#241a18;stroke-opacity:.55}.event-muted{opacity:.6}.status-marker{cursor:help;outline:none}.status-marker:focus .event-symbol rect,.status-marker:hover .event-symbol rect{stroke:#fff;stroke-width:2}.event-guide{stroke-dasharray:2 5;opacity:.25;pointer-events:none}.series-key{display:inline-block;width:10px;height:3px;vertical-align:middle}.event-list span{white-space:pre-line}
+#graph:focus{outline:none}.event-symbol .event-count-bg{fill:#241a18;stroke:currentColor;stroke-width:1}.plot .event-count{font:9px 'Trebuchet MS',sans-serif;fill:currentColor;stroke:none}

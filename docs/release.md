@@ -1,3 +1,12 @@
+This release includes normal Zinogre charge tracking, Bubbleblight countdowns
+and a clearer hunt timeline in the Windows and Linux desktop apps.
+
+- Monster HP curves and hover values stop after death and stay hidden before the first valid observation. Missing samples leave gaps.
+- Distinct timeline symbols identify statuses, flinches, confirmed breaks and severs. Nearby events have count badges and mouse, touch and keyboard details.
+- Secondary pools show their recorded threshold progress, with sever progress labelled for verified tail pools. A flinch alone never confirms a break.
+- Normal Zinogre shows its charged state and charge points when the local instance runs its AI. Remote numeric values remain unavailable; Thunderlord is excluded.
+- Bubbleblight icons show their native remaining timer across all three variants.
+
 HuntLog brings the HP overlay, hunt recorder and hunt-history dashboard together.
 
 - In-game monster HP, damage/DPS, parts and status tracking, configurable through Forge.

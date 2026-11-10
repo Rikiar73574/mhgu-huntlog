@@ -146,14 +146,48 @@ function partDetails(r,m){
   const broken=groups.filter(g=>(p.broken_groups&(1<<g))||events.some(e=>e.group===g)).length;
   const state=tail?(p.sever_count>=p.sever_required?'Severed':'Severable'):groups.length?(broken===groups.length?'Breakable\nBroken':broken?`Breakable\n${broken}/${groups.length} broken`:'Breakable\nIntact'):secondary?'Breakable':'';
   const target=p?flinchTarget(r,m,{slot,count:p.flinches}):null;
-  return `<tr><td>${esc(zoneLabel(m,slot))}${state?`<small>${esc(state)}</small>`:''}</td><td>${p?countMeter(p.flinches,target,'flinches'):'—'}${secondary?countMeter(p.sever_count,p.sever_required<65535?p.sever_required:null,tail?'severs':'secondary reactions'):''}</td><td>${fmt(ph.reduce((n,h)=>n+h.damage,0))}</td><td>${ph.length}</td></tr>`;
+  return `<tr><td>${esc(zoneLabel(m,slot))}${state?`<small>${esc(state)}</small>`:''}</td><td>${p?countMeter(p.flinches,target,'flinches'):'—'}${secondary?countMeter(p.sever_count,p.sever_required<65535?p.sever_required:null,tail?'severs':'additional thresholds'):''}</td><td>${fmt(ph.reduce((n,h)=>n+h.damage,0))}</td><td>${ph.length}</td></tr>`;
  }).join('');
  return `<section class="part-details"><details open><summary>Monster parts</summary><div class="part-table-scroll"><table><thead><tr><th>Part</th><th>Flinch progress</th><th>Damage landed</th><th>Hits</th></tr></thead><tbody>${rows}</tbody></table></div></details></section>`;
 }
 function monsterDetails(r){return r.monsters.map(m=>`<details class="monster-card" ${r.monsters.length===1?'open':''}><summary><span class="monster-identity">${monsterArt(m)}<span><strong>${esc(monsterLabel(r,m))}</strong><small>${esc(m.outcome==='killed'?'Killed':m.outcome==='captured'?'Captured':'Outcome unknown')}\n${fmt(m.hp)} / ${fmt(m.max_hp)} HP</small></span></span><span class="monster-size">${esc(crowns[m.crown]??'Crown unknown')}<small>Size ${fmt(m.size)}</small></span></summary><div class="monster-hunters">${partDetails(r,m)}<div class="hunter-columns"><span>Hunter / weapon</span><span>Damage</span><span>Hits</span><span>DPS</span></div>${m.players.map(p=>`<details class="hunter-card"><summary><span class="hunter-identity">${weaponIcon(p.weapon_type)?`<img class="weapon-icon" src="${weaponIcon(p.weapon_type)}" alt="${esc(weapons[p.weapon_type]||'Unknown weapon')}">`:''}<span><strong>${esc(p.name||'Unknown hunter')}</strong><small>${esc(weapons[p.weapon_type]||'Unknown weapon')}</small></span></span><span>${fmt(p.damage)}</span><span>${fmt(p.hit_count)}</span><span>${fmt(p.average_dps)}</span></summary>${equipmentDetails(r,p)}</details>`).join('')}</div></details>`).join('');}
-const eventNames={sleep:'Sleep',poison:'Poison',paralysis:'Paralysis',stun:'Stun',exhaust_proc:'Exhaust proc',mount_opening:'Mount opening',mount_ended:'Mount ended',blast:'Blast'};
-const eventColors={zinogre_charge:'#73b5eb',flinch:'#e7c54c',sever:'#79d4cb',secondary:'#e0a878',sleep:'#8eb1ed',poison:'#c18cdd',paralysis:'#e8ca50',stun:'#e6ac7b',exhaust_proc:'#91b8a2',mount_opening:'#e8e0c8',mount_ended:'#e8e0c8',blast:'#ef8774'};
-function eventLabel(e){if(e.kind==='zinogre_charge')return e.phase==='end'?'Zinogre discharged':e.phase==='observed'?'Zinogre already charged when observed':'Zinogre charged';if(e.partEvent)return `${e.partName}\n${e.kind==='flinch'?'Flinch':e.kind==='sever'?'Severed':'Secondary reaction'}${e.kind==='flinch'?` ${e.count}${e.flinchTarget?`/${e.flinchTarget}`:''}`:''}`;return `${eventNames[e.kind]||e.kind}${e.phase==='end'?' ended':e.phase==='observed'?' already active when observed':e.phase==='start'?' started':''}${e.count>1?` ×${e.count}`:''}`;}
+const eventNames={flinch:'Flinch',break:'Part broken',sever:'Severed',secondary:'Part threshold',zinogre_charge:'Zinogre charge',sleep:'Sleep',poison:'Poison',paralysis:'Paralysis',stun:'Stun',exhaust_proc:'Exhaust proc',mount_opening:'Mount opening',mount_ended:'Mount ended',blast:'Blast'};
+const eventColors={zinogre_charge:'#73b5eb',flinch:'#e7c54c',break:'#f3a35c',sever:'#79d4cb',secondary:'#c2aad7',sleep:'#8eb1ed',poison:'#c18cdd',paralysis:'#e8ca50',stun:'#e6ac7b',exhaust_proc:'#91b8a2',mount_opening:'#e8e0c8',mount_ended:'#e8e0c8',blast:'#ef8774'};
+function eventLabel(e){
+ if(e.kind==='zinogre_charge')return e.phase==='end'?'Zinogre discharged':e.phase==='observed'?'Zinogre already charged when observed':'Zinogre charged';
+ if(e.kind==='break')return `${e.partName}\n${e.phase==='observed'?'Already broken when first recorded':'Broken'}`;
+ if(e.partEvent){
+  const progress=`${e.count}${e.secondaryRequired?`/${e.secondaryRequired}`:''}`;
+  return `${e.partName}\n${e.kind==='flinch'?`Flinch ${e.count}${e.flinchTarget?`/${e.flinchTarget}`:''}`:e.kind==='sever'?'Severed':`${e.severProgress?'Sever progress':'Additional damage threshold'} ${progress}`}`;
+ }
+ return `${eventNames[e.kind]||e.kind}${e.phase==='end'?' ended':e.phase==='observed'?' already active when observed':e.phase==='start'?' started':''}${e.count>1?` ×${e.count}`:''}`;
+}
+// Small monochrome glyphs stay legible at the graph's scale and differ by shape.
+function eventGlyph(kind){return ({
+ flinch:'<path d="m2 3 3 4-3 3m5-8 3 5-3 5m5-9 2 4-2 4"/>',
+ break:'<path d="M3 2h5L6 6l3 3-3 5H3zm10 0h-3L8 6l3 3-3 5h5z"/>',
+ sever:'<path d="m2 13 4-4m4-4 4-4M2 9l5 5M9 2l5 5m-8-1 1-3m2 6 4-1"/>',
+ secondary:'<path d="M2 6h3l3 5 3-5h3M3 2h10M4 14h8"/>',
+ sleep:'<path d="M2 3h5L2 8h5m2 0h5l-5 5h5"/>',
+ poison:'<circle cx="5" cy="4" r="2"/><circle cx="11" cy="7" r="2"/><circle cx="5" cy="12" r="2"/>',
+ paralysis:'<path d="m9 1-6 8h5l-1 6 6-9H8z"/>',
+ stun:'<path d="m5 1 1 3 3 1-3 1-1 3-1-3-3-1 3-1zm7 7 1 2 2 1-2 1-1 3-1-3-2-1 2-1z"/>',
+ exhaust_proc:'<path d="M6 2C6 5 2 7 2 10a4 4 0 0 0 8 0C10 7 6 5 6 2zm6 0v4m2 0v3"/>',
+ mount_opening:'<path d="m2 13 3-6 3 2 3-5 3 9M4 4l3 2 3-3"/>',
+ mount_ended:'<path d="m2 12 4-5 4 2 4-6M3 2l10 12"/>',
+ blast:'<path d="m8 1 2 4 5-1-3 4 3 5-5-1-2 3-2-4-5 1 3-4-2-5 4 2z"/>',
+ zinogre_charge:'<path d="m9 1-5 8h4l-1 6 5-8H8zM1 5v6m14-6v6"/>'
+ })[kind]||'<path d="M3 3h10v10H3zM8 5v4m0 2v1"/>';}
+function positionEvents(events,r,x){
+ const groups=[],recent=new Map(),ends=[];
+ for(const e of events){const xx=x(e.t-r.started_at),key=e.monster+'/'+e.kind+'/'+e.phase,previous=recent.get(key);if(e.kind&&previous&&xx-previous.x<8){previous.events.push(e);previous.right=xx;}else{const group={event:e,events:[e],x:xx,right:xx};groups.push(group);recent.set(key,group);}}
+ return groups.map(g=>{let lane=ends.findIndex(end=>g.x-end>=24);if(lane<0)lane=ends.length;ends[lane]=g.right;return {...g,lane};});
+}
+function eventTooltip(events){
+ const groups=new Map(),multiple=new Set(events.map(e=>e.monster)).size>1;
+ for(const e of events){const label=eventLabel(e),name=[multiple?e.monsterName:'',e.partName].filter(Boolean).join('\n'),rows=e.partName?label.split('\n').slice(1).join('\n'):label;groups.set(name,[...(groups.get(name)||[]),rows]);}
+ return [...groups].map(([name,rows])=>`<div>${name?`<strong>${esc(name)}</strong><br>`:''}${rows.map(s=>esc(s).replace(/\n/g,'<br>')).join('<br>')}</div>`).join('');
+}
 function flinchTarget(r,m,e){
  const p=(m.parts||[]).find(p=>p.slot===e.slot);if(!p)return null;
  const rank=r.quest?.rank;const requirements=rank==='LR'?p.requirements_lr:['HR','G','GR'].includes(rank)?p.requirements_hr:null;
@@ -162,17 +196,21 @@ function flinchTarget(r,m,e){
  return next.length?Math.min(...next):targets.length?Math.max(...targets):null;
 }
 function graphEvents(r){
- const parts=(r.part_events||[]).filter(e=>e.kind!=='flinch'||showFlinches).map(e=>{const m=r.monsters.find(m=>m.id===e.monster)||{};return {...e,partEvent:true,partName:zoneLabel(m,e.slot),flinchTarget:e.kind==='flinch'?flinchTarget(r,m,e):null};});
- return [...(r.status_events||[]),...parts].filter(e=>(monster==='all'||String(e.monster)===monster)&&e.t-r.started_at>=lo&&e.t-r.started_at<=hi).sort((a,b)=>a.t-b.t);
+ const parts=(r.part_events||[]).filter(e=>e.kind!=='flinch'||showFlinches).map(e=>{
+  const m=r.monsters.find(m=>m.id===e.monster)||{},p=m.parts?.find(p=>p.slot===e.slot);
+  return {...e,partEvent:true,partName:zoneLabel(m,e.slot),flinchTarget:e.kind==='flinch'?flinchTarget(r,m,e):null,secondaryRequired:p?.sever_required>0&&p.sever_required<65535?p.sever_required:null,severProgress:p?.sever_type===1&&zoneLabel(m,e.slot).includes('Tail')};
+ });
+ const breaks=(r.part_breaks||[]).map(e=>({...e,kind:'break',partName:breakLabel(r.monsters.find(m=>m.id===e.monster)||{},e.group)}));
+ return [...(r.status_events||[]),...parts,...breaks].filter(e=>(monster==='all'||String(e.monster)===monster)&&e.t-r.started_at>=lo&&e.t-r.started_at<=hi).map(e=>({...e,monsterName:monsterLabel(r,r.monsters.find(m=>m.id===e.monster)||{})})).sort((a,b)=>a.t-b.t);
 }
 function renderDetail(){
  const r=current();if(!r)return;
  const damage=r.players.reduce((n,p)=>n+p.damage,0);
  $('detail').innerHTML=`<div class="run-heading"><div><h2>${esc(title(r))}</h2>${questHeading(r)}${r.partial?'<p class="subtle">Recording began after departure</p>':''}</div><span class="badge ${!r.complete||r.partial?'partial':''}">${r.complete?'Returned to town':'Incomplete recording'}</span></div>
  <div class="facts"><div><span>Recorded duration</span><strong>${clock(r.duration_seconds)}</strong></div><div><span>Large-monster damage</span><strong>${fmt(damage)}</strong></div><div><span>Average party DPS</span><strong>${fmt(r.duration_seconds?damage/r.duration_seconds:null)}</strong></div><div><span>Hunters recorded</span><strong>${r.players.length}</strong></div></div>
- <section class="chart-panel" aria-label="Hunt timeline"><div class="chart-controls">${r.monsters.length>1?`<label>Monster<select id="monster"><option value="all">All large monsters</option>${r.monsters.map(m=>`<option value="${m.id}">${esc(monsterLabel(r,m))}</option>`).join('')}</select></label>`:''}<label>Graph<select id="metric"><option value="dps">Damage per second</option><option value="damage">Cumulative damage</option><option value="hp">Monster HP</option></select></label><label>Window<select id="window"><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="30">30 seconds</option><option value="60">60 seconds</option></select></label><label class="timeline-toggle"><input id="flinches" type="checkbox" ${showFlinches?'checked':''}> Flinches</label></div>
+ <section class="chart-panel" aria-label="Hunt timeline"><div class="chart-controls">${r.monsters.length>1?`<label>Monster<select id="monster" aria-label="Monster"><option value="all">All large monsters</option>${r.monsters.map(m=>`<option value="${m.id}">${esc(monsterLabel(r,m))}</option>`).join('')}</select></label>`:''}<label>Graph<select id="metric" aria-label="Graph"><option value="dps">Damage per second</option><option value="damage">Cumulative damage</option><option value="hp">Monster HP</option></select></label><label>Window<select id="window" aria-label="Window"><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="30">30 seconds</option><option value="60">60 seconds</option></select></label><label class="timeline-toggle"><input id="flinches" type="checkbox" ${showFlinches?'checked':''}> Flinches</label></div>
  <div class="players">${r.players.map((p,i)=>`<label><input type="checkbox" data-player="${p.id}" ${visible.has(p.id)?'checked':''}><span class="dot" style="background:${colors[i%colors.length]}"></span>${esc(p.name||`Hunter ${p.slot??p.id}`)}</label>`).join('')}</div>
- <div class="plot" id="plot"><svg id="graph" viewBox="0 0 900 310" role="img" aria-label="Hunt timeline graph"></svg><div id="tooltip" class="tooltip"></div></div>
+ <div id="event-legend" class="event-legend" aria-label="Timeline symbols"></div><div class="plot" id="plot"><svg id="graph" viewBox="0 0 900 310" role="group" tabindex="-1" aria-label="Hunt timeline graph"></svg><div id="tooltip" class="tooltip"></div></div>
  <p class="chart-note" id="chartnote"></p><div id="status-timeline"></div><div class="range-row"><label>From <span id="from-label"></span><input id="from" type="range" min="0" max="${r.duration_seconds}" step="1" value="${lo}"></label><label>To <span id="to-label"></span><input id="to" type="range" min="0" max="${r.duration_seconds}" step="1" value="${hi}"></label><button id="full" class="quiet">Full hunt</button></div></section>
  <section class="encounters" aria-label="Monster and hunter details">${monsterDetails(r)}</section>${huntLoot(r)}
  <p class="subtle">${r.unattributed_hits.length?`${r.unattributed_hits.length} legacy hits without a verified large-monster target excluded. `:''}Damage is recorded hit damage and can exceed a monster’s starting HP. Killed is inferred when the last recorded HP is zero. Capture requires a separate signal.</p>
@@ -185,9 +223,26 @@ function renderDetail(){
  $('full').onclick=()=>{lo=0;hi=r.duration_seconds;$('from').value=lo;$('to').value=hi;draw();};
  $('download').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(r,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`hunt-${r.run}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};draw();
 }
+function hpTimeline(r,m){
+ const points=[];let start=null,end=null;
+ for(const s of r.samples){
+  const row=s.monsters.find(x=>x.id===m.id),t=s.t-r.started_at;
+  if(!row||!Number.isFinite(row.hp)||row.hp<0||row.area===255){if(points.length&&points.at(-1)[1]!==null)points.push([t,null]);continue;}
+  start??=t;end=t;points.push([t,row.hp]);if(row.hp===0)break;
+ }
+ return {points,start,end};
+}
+function valueAt(line,t){
+ if(line.start!=null&&t<line.start||line.end!=null&&t>line.end)return null;
+ let last=null;for(const [time,v]of line.points){if(time>t)break;last=v;}return last;
+}
+function plotPoints(line,lo,hi){
+ const first=valueAt(line,lo),points=[...(first==null?[]:[[lo,first]]),...line.points.filter(p=>p[0]>=lo&&p[0]<=hi)];
+ const last=valueAt(line,hi);if(last!=null&&points.at(-1)?.[0]!==hi)points.push([hi,last]);return points;
+}
 function series(r){
  const hits=r.hits.filter(h=>monster==='all'||String(h.monster)===monster);
- if(metric==='hp')return r.monsters.filter(m=>monster==='all'||String(m.id)===monster).map((m,i)=>({label:monsterLabel(r,m),color:colors[i%colors.length],points:r.samples.flatMap(s=>{const row=s.monsters.find(x=>x.id===m.id);return row&&Number.isFinite(row.hp)?[[s.t-r.started_at,row.hp]]:[];})}));
+ if(metric==='hp')return r.monsters.flatMap((m,i)=>{const line=hpTimeline(r,m);return (monster==='all'||String(m.id)===monster)&&line.points.length?[{label:monsterLabel(r,m),color:colors[i%colors.length],...line}]:[];});
  return r.players.flatMap((p,i)=>{
   if(!visible.has(p.id))return [];
   const ph=hits.filter(h=>h.player===p.id);let points=[];
@@ -201,30 +256,43 @@ function series(r){
  });
 }
 function draw(){
- const r=current(),lines=series(r),svg=$('graph'),x0=58,x1=880,y0=20,y1=270,span=Math.max(hi-lo,.01);
+ const r=current(),lines=series(r),svg=$('graph'),x0=58,x1=880,span=Math.max(hi-lo,.01),x=t=>x0+(t-lo)/span*(x1-x0);
+ const events=graphEvents(r),markers=positionEvents(events,r,x),lanes=Math.max(1,...markers.map(m=>m.lane+1)),y0=14+lanes*20,y1=y0+250;
+ svg.setAttribute('viewBox',`0 0 900 ${y1+40}`);
  $('from-label').textContent=clock(lo);$('to-label').textContent=clock(hi);$('window').disabled=metric!=='dps';
  $('chartnote').textContent=metric==='hp'?'HP samples by monster. Player filters apply to damage graphs. Hover or tap the plot to inspect values.':metric==='damage'?'Cumulative damage from departure. Hover or tap the plot to inspect values.':`Damage per second in ${windowSize}-second windows. Small monsters excluded. Hover or tap for values.`;
- const at=(line,t)=>{let last=null;for(const [time,v]of line.points){if(time>t)break;last=v;}return last;};
- const values=lines.flatMap(l=>[at(l,lo),...l.points.filter(p=>p[0]>=lo&&p[0]<=hi).map(p=>p[1])]).filter(v=>v!=null);
- const ymax=Math.max(1,...values)*1.1,x=t=>x0+(t-lo)/span*(x1-x0),y=v=>y1-v/ymax*(y1-y0);
- let markup='<defs><clipPath id="plot-clip"><rect x="58" y="20" width="822" height="250"/></clipPath></defs>';
+ const values=lines.flatMap(l=>[valueAt(l,lo),...l.points.filter(p=>p[0]>=lo&&p[0]<=hi).map(p=>p[1])]).filter(Number.isFinite);
+ const ymax=values.reduce((n,v)=>Math.max(n,v),1)*1.1,y=v=>y1-v/ymax*(y1-y0);
+ let markup=`<defs><clipPath id="plot-clip"><rect x="58" y="${y0}" width="822" height="250"/></clipPath></defs>`;
  for(let i=0;i<=4;i++){const value=ymax*i/4,yy=y(value);markup+=`<line class="grid" x1="${x0}" y1="${yy}" x2="${x1}" y2="${yy}"/><text x="48" y="${yy+4}" text-anchor="end">${fmt(value)}</text>`;}
- for(let i=0;i<=6;i++){const t=lo+span*i/6;markup+=`<text x="${x(t)}" y="297" text-anchor="middle">${clock(t)}</text>`;}
+ for(let i=0;i<=6;i++){const t=lo+span*i/6;markup+=`<text x="${x(t)}" y="${y1+27}" text-anchor="middle">${clock(t)}</text>`;}
  for(const l of lines){
   // Keep the last observed value at the left edge when zooming.
-  const first=at(l,lo),points=[...(first==null?[]:[[lo,first]]),...l.points.filter(p=>p[0]>=lo&&p[0]<=hi)];
-  const last=at(l,hi);if(last!=null)points.push([hi,last]);
-  const path=points.map(([t,v],i)=>`${i?'L':'M'}${x(t).toFixed(2)},${y(v).toFixed(2)}`).join(' ');
+  let pen=false;
+  const path=plotPoints(l,lo,hi).map(([t,v])=>{if(v==null){pen=false;return '';}const command=pen?'L':'M';pen=true;return `${command}${x(t).toFixed(2)},${y(v).toFixed(2)}`;}).join(' ');
   markup+=`<path class="curve" clip-path="url(#plot-clip)" stroke="${l.color}" d="${path}"/>`;
  }
  if(!lines.length)markup+='<text x="450" y="140" text-anchor="middle">Select a player to display the graph</text>';
- markup+='<line id="cursor" x1="0" y1="20" x2="0" y2="270" stroke="#c4b0a6" stroke-dasharray="3 4" visibility="hidden"/>';
- const events=graphEvents(r);
- for(const e of events){const t=e.t-r.started_at,xx=x(t),label=eventLabel(e),color=eventColors[e.kind]||'#ddd';markup+=`<g class="status-marker"><title>${esc(label)}\n${clock(t)}</title><line x1="${xx}" x2="${xx}" y1="20" y2="270" stroke="${color}" stroke-dasharray="2 5" opacity=".45"/><circle cx="${xx}" cy="${e.phase==='end'?30:20}" r="4" fill="${e.phase==='end'?'#211714':color}" stroke="${color}"/></g>`;}
+ markup+=`<line id="cursor" x1="0" y1="${y0}" x2="0" y2="${y1}" stroke="#c4b0a6" stroke-dasharray="3 4" visibility="hidden"/>`;
+ for(const [i,m] of markers.entries()){
+  const e=m.event,yy=12+m.lane*20,color=eventColors[e.kind]||'#ddd';
+  markup+=`<line class="event-guide" x1="${m.x}" x2="${m.x}" y1="${yy+9}" y2="${y1}" stroke="${color}"/><g class="status-marker" data-event-index="${i}" tabindex="0" role="button" aria-label="${esc(clock(e.t-r.started_at)+'\n'+(monster==='all'&&r.monsters.length>1?e.monsterName+'\n':'')+m.events.map(eventLabel).join('\n'))}" style="color:${color}"><g class="event-symbol ${e.phase==='end'||e.phase==='observed'?'event-muted':''}" transform="translate(${m.x-8},${yy-8})"><rect x="-1" y="-1" width="18" height="18" rx="2"/>${eventGlyph(e.kind)}${m.events.length>1?`<circle class="event-count-bg" cx="15" cy="0" r="5"/><text class="event-count" x="15" y="3" text-anchor="middle">${m.events.length}</text>`:''}</g></g>`;
+ }
+ $('event-legend').innerHTML=[...new Set(events.map(e=>e.kind))].map(kind=>`<span style="color:${eventColors[kind]||'#ddd'}"><svg viewBox="0 0 16 16" aria-hidden="true">${eventGlyph(kind)}</svg>${esc(eventNames[kind]||kind)}</span>`).join('');
  $('status-timeline').innerHTML=events.length?`<details class="event-list"><summary>${events.length} timeline events in this view</summary>${events.map(e=>`<div><time>${clock(e.t-r.started_at)}</time><span style="color:${eventColors[e.kind]}">${esc(eventLabel(e))}</span>${monster==='all'?`<small>${esc(monsterLabel(r,r.monsters.find(m=>m.id===e.monster)||{}))}</small>`:''}</div>`).join('')}<p class="chart-note">Observed game-state changes. Mount openings and ended mounts do not confirm a successful topple.</p></details>`:'<p class="chart-note">No events shown in this view.</p>';
  svg.innerHTML=markup;
- svg.onpointermove=e=>{const box=svg.getBoundingClientRect(),px=(e.clientX-box.left)*900/box.width;if(px<x0||px>x1)return hide();const t=lo+(px-x0)/(x1-x0)*span;const cursor=$('cursor');cursor.setAttribute('x1',px);cursor.setAttribute('x2',px);cursor.setAttribute('visibility','visible');const tip=$('tooltip');tip.innerHTML=`<strong>${clock(t)}</strong>`+lines.map(l=>`<div><span style="color:${l.color}">●</span> ${esc(l.label)}: ${fmt(at(l,t))}${metric==='dps'?' /s':''}</div>`).join('');const near=events.filter(ev=>Math.abs(x(ev.t-r.started_at)-px)<8);if(near.length)tip.innerHTML+='<hr>'+near.map(ev=>`<div>${esc(eventLabel(ev)).replace(/\n/g,'<br>')}</div>`).join('');tip.style.display='block';tip.style.left=`${Math.max(0,Math.min(e.clientX-box.left+14,box.width-220))}px`;tip.style.top='15px';};
- function hide(){$('tooltip').style.display='none';$('cursor').setAttribute('visibility','hidden');}svg.onpointerleave=hide;
+ function inspect(t,px,near){
+  const box=svg.getBoundingClientRect(),cursor=$('cursor'),tip=$('tooltip');cursor.setAttribute('x1',px);cursor.setAttribute('x2',px);cursor.setAttribute('visibility','visible');
+  const end=near.length?Math.max(...near.map(e=>e.t-r.started_at)):t;
+  tip.innerHTML=`<strong>${clock(t)}${end>t+1?' - '+clock(end):''}</strong>`+lines.flatMap(l=>{const v=valueAt(l,t);return Number.isFinite(v)?[`<div><span class="series-key" style="background:${l.color}"></span> ${esc(l.label)}: ${fmt(v)}${metric==='dps'?' /s':''}</div>`]:[];}).join('');
+  if(near.length)tip.innerHTML+='<hr>'+eventTooltip(near);
+  tip.style.display='block';tip.style.left=`${Math.max(0,Math.min(px*box.width/900+14,box.width-220))}px`;tip.style.top='15px';
+ }
+ svg.onpointermove=e=>{const box=svg.getBoundingClientRect(),px=(e.clientX-box.left)*900/box.width;if(px<x0-9||px>x1+9)return hide();const target=e.target.closest?.('[data-event-index]'),marker=target&&markers[Number(target.dataset.eventIndex)];if(marker)return inspect(marker.event.t-r.started_at,marker.x,marker.events);const t=lo+(px-x0)/(x1-x0)*span;inspect(t,px,events.filter(ev=>Math.abs(x(ev.t-r.started_at)-px)<8));};
+ svg.onfocusin=e=>{const target=e.target.closest?.('[data-event-index]'),m=target&&markers[Number(target.dataset.eventIndex)];if(m)inspect(m.event.t-r.started_at,m.x,m.events);};
+ svg.onclick=e=>{const target=e.target.closest?.('[data-event-index]'),m=target&&markers[Number(target.dataset.eventIndex)];if(m)inspect(m.event.t-r.started_at,m.x,m.events);};
+ svg.onkeydown=e=>{if(e.key==='Escape'){hide();svg.focus();}else if(e.key==='Enter'||e.key===' '){const m=markers[Number(e.target.dataset.eventIndex)];if(m){e.preventDefault();inspect(m.event.t-r.started_at,m.x,m.events);}}};
+ function hide(){$('tooltip').style.display='none';$('cursor').setAttribute('visibility','hidden');}svg.onpointerleave=hide;svg.onfocusout=hide;
 }
 for(const id of ['search','status','crown','weapon','rank'])$(id).addEventListener(id==='search'?'input':'change',renderList);
 $('clear').onclick=()=>{for(const id of ['search','status','crown','weapon','rank'])$(id).value='';renderList();};$('refresh').onclick=load;load();

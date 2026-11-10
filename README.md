@@ -54,6 +54,11 @@ Linux/Wine defaults are detected by the application. Portable/custom saves can
 always be selected explicitly. Old records retain unknown fields when the
 recorder did not capture them. See [dashboard documentation](history/README.md).
 
+The timeline defaults to cumulative damage. Monster HP appears only during
+that monster's recorded life, ending at its first zero-HP sample. Distinct
+symbols identify statuses, flinches, confirmed breaks and severs. Hover, tap
+or focus a symbol for details; nearby events of the same kind are grouped.
+
 ## Build and test
 
 The mod needs Rust nightly-2026-11-02 with rust-src, Python 3, and LLD supplied

@@ -192,3 +192,26 @@ its timer was cleared. Effect fields were set only in that disposable process
 for the rendering check; this was not a natural Mizutsune encounter. The
 verified NRO SHA256 is
 `465d288f6ba9d663e93d72e8518bba52c6a0a2a25da911ef6f5a223669faaf34`.
+
+## Timeline lifetimes and event symbols
+
+The HP regression covers first observation, terminal zero, missing samples,
+unloaded area 255, zoom boundaries and stable monster colors. Damage totals
+continue after a kill. Event checks distinguish recorded break flags from
+flinches, preserve breaks when hiding flinches, label observed breaks, and
+exercise threshold progress and marker grouping without merging monsters.
+All three JavaScript suites and 35 Python cases pass.
+
+A local replay of the completed Fated Four hunt showed four separate HP
+lifetimes. At the Astalos head-break marker, the tooltip contained only
+Astalos's current HP and "Head / Broken". Earlier dead and future unspawned
+monsters were omitted. Mouse selection, Enter/Space inspection, Escape
+dismissal, flinch filtering and late-hunt zoom were checked in the browser.
+No original journal was modified or included in the release.
+
+The refreshed Linux bundle was built on Ubuntu 22.04 and passed its packaged
+dashboard/graph smoke check on the host. The Windows x64 PE was built with
+CPython 3.12.10 and passed all 35 Python/Qt cases plus the packaged graph check
+under Wine 11.20. Physical Windows hardware remains untested. These desktop
+changes leave the verified Bubbleblight/Zinogre NRO above byte-for-byte intact.
+No input or memory writes were sent to the player's running game.

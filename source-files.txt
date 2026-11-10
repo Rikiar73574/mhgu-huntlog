@@ -120,6 +120,7 @@ tests/test_hunt_history.py
 tests/test_loot_details.py
 tests/test_package.py
 tests/test_part_ui.cjs
+tests/test_timeline_ui.cjs
 tests/test_player_details.py
 tools/build-website-windows.cmd
 tools/build_app.py

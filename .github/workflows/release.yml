@@ -23,6 +23,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_*.py' -v
           node tests/test_part_ui.cjs
           node tests/test_charge_ui.cjs
+          node tests/test_timeline_ui.cjs
           python tools/package.py
           python tools/package.py --source
       - uses: actions/upload-artifact@v7
