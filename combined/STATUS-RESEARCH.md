@@ -12,3 +12,26 @@ Tracker runs each game update, before one-second sample throttling. First seen o
 Pure tracker tests cover initial state, transitions, counters, disappearance/reacquisition, resets and separate monster identities. Live hunt comparison remains required after restart.
 
 Counters stop reporting new procs once the game counter saturates (30 for exhaust/blast, 60 for mounting). No fabricated events beyond that cap.
+
+## Guest buildup correction and HuntLog sharing
+
+Ordinary `netEmAction` uses runtime send `0x2cb330` / receive `0x2cc154`.
+It does not copy KO `+0x5d76`, exhaust `+0x5d82`, or mount `+0x5d9a`.
+The previously tested copy at `0x2cca0c..0x2cca58` belongs to the separate
+full-state receive routine `0x2cc86c`; corresponding sends occur around
+`0x2cbb74`. Passing that isolated block did not establish regular replication.
+A read-only selected, discovered guest Nargacuga snapshot had valid thresholds
+220 / 216 / 72 but remained at zero throughout 20 seconds of HP loss.
+
+The HUD now accepts bounded, expiring HuntLog status reports only from the
+monster's current AI owner, matched by quest, network ID and species. It never
+writes those values into the game's monster state. Without a fresh owner report,
+the guest rows are hidden. Owner-local readings keep their existing behavior.
+
+Party damage, hit totals and elapsed meter time are published together. The
+lowest present HuntLog player slot supplies the shared HUD reference, including
+its own published snapshot, so peers use the same denominator and clock. Receipt
+replaces the displayed snapshot and does not add hits or alter local journals.
+The channel uses Forge's virtual local-play UDP sockets on port 52689, with
+bounded nonblocking receive work, no external host-network listener, and no
+initialization or shutdown of the game's socket subsystem.

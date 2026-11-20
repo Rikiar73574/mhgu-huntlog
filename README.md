@@ -23,8 +23,8 @@ Part bars show live stagger and sever pools; part labels and required flinches
 depend on mapped metadata. A stagger does not automatically mean a part broke.
 Anatomical labels appear only when the complete pool signature matches.
 Selected, discovered monsters keep KO, exhaust and mount buildup visible at
-zero, including when joining another player's quest. Guest values follow the
-game's monster-action network updates. Elemental-blight icons show their own
+zero when a fresh reading is available. Guests use HuntLog reports from the
+monster's AI owner, as described below. Elemental-blight icons show their own
 remaining countdown, including Thunderblight.
 Bubbleblight's icon also shows its native remaining duration across its variants.
 Normal Zinogre also shows its charged state and a 0–100 charge-point meter.
@@ -37,6 +37,18 @@ Recording continues when the HUD or DPS display is hidden. The journal
 `hunter_hunts.jsonl` and `hunter_hud.ini` live beside the game's save files.
 HuntLog does not replace character saves. A crash can lose the buffered tail;
 an unclosed run remains incomplete.
+
+### Multiplayer HUD synchronization
+
+Updated HuntLog peers automatically share the same damage totals and elapsed
+meter time, keeping DPS and damage shares aligned. The local hunt recording
+remains independent; receiving a snapshot never counts another hit.
+
+KO, exhaust and mount percentages come from the monster's current AI owner.
+That player also needs the updated HuntLog. Missing or expired owner data is
+hidden instead of showing an unchanging zero. Unmodded players can still join.
+The shared DPS reference controls its reset; followers retain their local
+recording but cannot reset the party's displayed totals independently.
 
 ## Desktop dashboard
 

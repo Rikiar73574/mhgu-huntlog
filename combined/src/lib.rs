@@ -9,6 +9,7 @@ mod recorder;
 mod monster_size;
 mod hunt_runtime;
 mod status_events;mod charge;
+mod peer;mod peer_transport;mod peer_hud;
 mod item_events;mod part_names;mod parts;mod player_details;mod rewards;
 mod target;
 mod layout;
@@ -438,6 +439,10 @@ impl DpsState {
             return;
         }
         self.elapsed += if dt.is_finite() && dt > 0.0 { dt } else { 1.0 / 60.0 };
+        self.sample_history();
+    }
+
+    fn sample_history(&mut self) {
         if self.history_len == 0 || self.elapsed - self.last_sample >= SAMPLE_INTERVAL {
             let mut damage = [0u32; 4];
             for i in 0..self.count {
@@ -695,8 +700,7 @@ pub extern "C" fn forge_onUpdate(dt: f32) {
         // Update precedes Forge's next ImGui frame; the font atlas is unlocked.
         load_custom_font();
     }
-    let monsters = monsters::capture();
-    MONSTERS.with(|value| *value = monsters);
+    let mut monsters = monsters::capture();
     // 在游戏更新结束后投影；NVN 绘制回调只读插件快照，不访问游戏对象。
     let base = GAME_BASE.load(Ordering::Relaxed);
     FRAME.fetch_add(1, Ordering::Relaxed);
@@ -719,6 +723,8 @@ pub extern "C" fn forge_onUpdate(dt: f32) {
     hunt_runtime::update(base,quest::frame_seconds(&monsters::GameMemory{base},base,dt),&monsters);
     let run=hunt_runtime::status().1;
     MONSTER_DPS.with(|pool|{if pool.run!=run{pool.run=run;pool.keys=[0;16];for state in &mut pool.states{state.reset();}DPS.with(|s|s.reset());}});
+    peer_hud::update(&monsters::GameMemory{base},base,quest::capture(&monsters::GameMemory{base},base),run,quest::frame_seconds(&monsters::GameMemory{base},base,dt),&mut monsters);
+    MONSTERS.with(|value| *value = monsters);
     let display = unsafe { display_area(base) };
     if display.width >= 320.0 && display.height >= 240.0 {
         STATE.with(|state| state.set_display(display));
@@ -1885,6 +1891,8 @@ fn draw_dps() {
     let mut monsters = MONSTERS.with(|state| *state);
     let focus=monsters.entries[..monsters.count].iter().find(|m|m.selected).or_else(||if monsters.count==1{Some(&monsters.entries[0])}else{None}).map(|m|m.object);
     if let Some(focus)=focus {dps=MONSTER_DPS.with(|pool|pool.keys.iter().position(|key|*key==focus).map(|i|pool.states[i]).unwrap_or_else(DpsState::new));}
+    let key=focus.and_then(|object|monsters.entries[..monsters.count].iter().find(|m|m.object==object).map(|m|(m.network,m.species))).unwrap_or((u16::MAX,0));
+    if let Some(shared)=peer_hud::meter(key.0,key.1){let visible=dps.visible;dps=shared;dps.visible=visible;}
     if !dps.visible || !dps.active || dps.total == 0 { dps.count=0; }
     if monsters.count==0 && dps.count==0 && forge::graphics::Graphics::is_menu_visible() {
         monsters.count=1;
@@ -1943,7 +1951,8 @@ fn draw_settings_body() {
             if !TIMERS_AVAILABLE.load(Ordering::Relaxed){imgui::text("Timers unavailable: game code did not match MHGU 1.4.");}
             imgui::tree_pop();
         }
-        if imgui::button(c"Reset DPS", Default::default()) {
+        if peer_hud::following() {imgui::text("Shared DPS can be reset by the party reference player.");}
+        else if imgui::button(c"Reset DPS", Default::default()) {
             DPS.with(|dps| dps.reset_now());
             MONSTER_DPS.with(|pool|{for state in &mut pool.states{state.reset_now();}});
         }

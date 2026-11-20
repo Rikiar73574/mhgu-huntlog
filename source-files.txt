@@ -63,6 +63,13 @@ combined/src/monster_size.rs
 combined/src/monsters.rs
 combined/src/part_names.rs
 combined/src/parts.rs
+combined/src/peer.rs
+combined/src/peer_hud.rs
+combined/src/peer_hud_cases.rs
+combined/src/peer_hud_tests.rs
+combined/src/peer_tests.rs
+combined/src/peer_transport.rs
+combined/src/peer_transport_tests.rs
 combined/src/player_details.rs
 combined/src/player_details_tests.rs
 combined/src/quest.rs
@@ -120,8 +127,8 @@ tests/test_hunt_history.py
 tests/test_loot_details.py
 tests/test_package.py
 tests/test_part_ui.cjs
-tests/test_timeline_ui.cjs
 tests/test_player_details.py
+tests/test_timeline_ui.cjs
 tools/build-website-windows.cmd
 tools/build_app.py
 tools/build_part_names.py
@@ -141,5 +148,6 @@ tools/smoke_app.py
 tools/verify_charge_arm.py
 tools/verify_draw_guard_arm.py
 tools/verify_game_target_arm.py
+tools/verify_peer_vsock.py
 tools/verify_timer_arm.py
 tools/website.py

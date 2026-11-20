@@ -61,8 +61,8 @@ fword(P+0x2944,2400.0);word(P+0x2940,1)
 u.reg_write(UC_ARM_REG_R4,P);u.reg_write(UC_ARM_REG_R5,0)
 u.emu_start(0x2f540c,0x2f5474,count=100)
 assert get(P+0x2944)==0.0 and struct.unpack('<I',u.mem_read(P+0x2940,4))[0]==0
-# Execute the unmodified netEmAction receive block: guests get the same
-# KO/exhaust/mount fields that HuntLog reads, including zero after a proc.
+# Execute the separate full-state receive block. These fields are NOT in
+# ordinary netEmAction updates; this alone cannot prove live guest buildup.
 packet=V+0x8000
 for values in ((60,25,100),(0,0,0)):
  for offset,value in zip((0x44,0x46,0x4a),values):u.mem_write(packet+offset,struct.pack('<H',value))
@@ -70,4 +70,4 @@ for values in ((60,25,100),(0,0,0)):
  u.emu_start(0xcc9d0,0xcca9c,count=100)
  assert u.reg_read(UC_ARM_REG_PC)==0xcca9c
  assert tuple(struct.unpack('<H',u.mem_read(S+offset,2))[0] for offset in (0x5d76,0x5d82,0x5d9a))==values
-print('Actual ARM routines passed: drink/paint setters and decay, elemental timers, Stench and Bubble icons/countdowns/cures, guest KO/exhaust/mount receive and reset')
+print('Actual ARM routines passed: drink/paint setters and decay, elemental timers, Stench and Bubble icons/countdowns/cures, full-state KO/exhaust/mount decode and reset')

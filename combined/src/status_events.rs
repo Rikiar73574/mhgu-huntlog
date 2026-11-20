@@ -35,7 +35,7 @@ impl Tracker {
 }
 #[cfg(test)]mod tests{
  use super::*;
- #[test]fn guest_buildups_stay_visible_before_hits_and_after_a_proc(){
+ #[test]fn supported_zero_buildups_stay_visible_before_hits_and_after_a_proc(){
   struct Mem(std::collections::BTreeMap<u32,u16>);
   impl crate::target::Memory for Mem{
    fn u8(&self,_:u32)->Option<u8>{None}
@@ -44,8 +44,8 @@ impl Tracker {
   }
   let state=0x08010000;
   let mut m=Mem(std::collections::BTreeMap::from([(state+0x5d78,150),(state+0x5d84,180),(state+0x5d9c,260)]));
-  // Guest actors receive these three values from netEmAction, independently
-  // of which player posted the quest or owns the monster's AI.
+  // Visibility arithmetic only. Ordinary action packets do not replicate
+  // these counters; peer_hud accepts fresh reports from the AI owner.
   for values in [[0,0,0],[60,25,100],[0,0,0]]{
    for (offset,value) in [0x5d76,0x5d82,0x5d9a].into_iter().zip(values){m.0.insert(state+offset,value);}
    let b=buildups(&m,state);

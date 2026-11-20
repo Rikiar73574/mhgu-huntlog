@@ -5,6 +5,7 @@ Requires Unicorn and llvm-objdump. Does not touch the running game.
 """
 import re
 import subprocess
+import struct
 import sys
 from pathlib import Path
 from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM, UC_HOOK_CODE
@@ -18,7 +19,8 @@ getter = address('igGetForegroundDrawList_Nil@plt')
 image = Path(sys.argv[2]).read_bytes()
 u = Uc(UC_ARCH_ARM, UC_MODE_ARM)
 u.ctl_set_cpu_model(UC_CPU_ARM_MAX)
-u.mem_map(0, 0x100000)
+bss = struct.unpack_from("<I", image, 0x38)[0]
+u.mem_map(0, (len(image) + bss + 0xfff) & ~0xfff)
 u.mem_write(0, image)
 u.mem_map(0x10000000, 0x10000)
 stop = 0x1000f000
