@@ -221,3 +221,27 @@ The handler regression covers a late spawn, terminal zero, unloaded actors,
 first-hit fallback, missing data, single-point ranges and the all-monster reset.
 The saved Fated Four replay fitted Gammoth to 0:00–6:12 and Astalos to
 7:25–11:14; all-monster selection and Full hunt both restored 0:00–24:42.
+
+## Live peer synchronization (2026-11-24)
+
+Two hidden MHGURecomp Windows instances under Wine, with independent prefixes
+and copied saves, joined the same local-play hub and accepted quest 10107
+(Tackling the Tetsucabra). Both loaded the plugin built from fb2152c:
+`b50cfcfd7b5f2b519db0a0e90757f6ce7a5d711875b2bbd5b3897f7259519a4b`.
+The guest received fresh owner snapshots for monster network ID 0, species 66.
+
+For a deterministic propagation check, only the private host's mount pool was
+set to 36/72, 54/72 and 0/72. The guest's native pool remained zero; its HuntLog
+cache and HUD followed the transmitted values (50%, 75%, 0%). The private
+guest's camera discovery/selection fields were set for the HUD rendering check.
+This verifies transport and rendering, not natural mounting-hit generation.
+Pausing the host process for two seconds removed the guest's stale KO/exhaust/
+mount rows; resuming restored fresh values within one second.
+
+This covers direct local play with two updated peers. Online lobby services,
+emulator rooms, AI-owner migration and four-player sessions were not tested.
+No input or memory writes targeted the player's main game or original saves.
+
+The previous latest release, v0.2.5, predates fb2152c. Its downloadable plugin
+hash is `465d288f6ba9d663e93d72e8518bba52c6a0a2a25da911ef6f5a223669faaf34`;
+updating to that release alone does not provide peer synchronization.
